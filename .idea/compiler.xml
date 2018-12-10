@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="xinsight-ots-client" />
+        <module name="xinsight-ots-common" />
+        <module name="xinsight-ots-coprocessor" />
+        <module name="xinsight-ots-datasource" />
+        <module name="xinsight-ots-mapreduce" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="xinsight-ots-client" target="1.7" />
+      <module name="xinsight-ots-common" target="1.7" />
+      <module name="xinsight-ots-coprocessor" target="1.7" />
+      <module name="xinsight-ots-datasource" target="1.7" />
+      <module name="xinsight-ots-mapreduce" target="1.7" />
+      <module name="xinsight-otspro" target="1.7" />
+    </bytecodeTargetLevel>
+  </component>
+</project>

@@ -1,0 +1,182 @@
+#personalPage{
+	background:#f7f7f7;
+}
+
+.menuType{
+	height:55px;
+	padding:0px;
+	text-align:center;
+	margin:0 auto;
+}
+
+.contentMenu{
+	width:90px;
+	height:55px;
+	color:#000;
+	float:left;
+	padding:20px;
+	padding-bottom:10px;
+	cursor:pointer;
+	text-align:center;
+}
+
+.contentMenu-col{
+	width:90px;
+	height:55px;
+	color:#000;
+	float:left;
+	padding:20px;
+	padding-bottom:10px;
+	cursor:pointer;
+	text-align:center;
+}
+
+
+
+.contentMenu-sel{
+	width:90px;
+	height:55px;
+	color:#000;
+	float:left;
+	padding:20px;
+	padding-bottom:0px;
+	cursor:pointer;
+	text-align:center;
+}
+
+.indexBar{
+	width:90px;
+	height:58px;
+	border-bottom:solid 4px #3bafe0;
+	position:absolute;
+}
+
+.contentTitle{
+	font-size:16px;
+	color:#f08200;
+	padding:20px;
+}
+
+.contentRect{
+	width:220px;
+	height:195px;
+	border-radius:10px;
+	background:#FFF;
+	border:solid 1px #ddd;
+	float:left;
+	margin:20px;
+}
+
+.contentRectWrap{
+	width:786px;
+	margin:-50px auto 0 auto;
+}
+
+.statistic{
+	font-size:24px;
+	color:#f08200;
+	font-weight:bold;
+}
+
+.description{
+	font-size:12px;
+	color:#666;
+	line-height:25px;
+}
+
+.saftyLeft{
+	background:#dedfde;
+	width:146px;
+	height:97px;
+	border:solid 1px #cecccc;
+	border-right:none;
+	float:left;
+	text-align:center;
+	font-size:16px;
+	font-weight:bold;
+}
+
+.saftyRight{
+	background:#edefed;
+	width:550px;
+	height:97px;
+	border:solid 1px #cecccc;
+	border-left:none;
+	float:left;
+	padding:0 30px;
+}
+
+.saftyTitle{
+	line-height:97px;
+}
+
+.saftyContentSingleLine{
+	float:left;
+	line-height:97px;
+}
+
+.saftyContentMail{
+	float:left;
+	padding-top:15px;
+	line-height:21px;
+}
+
+.yellowLink:link, .yellowLink:visited, .yellowLink:focus{
+	color:#f08200;
+}
+
+.yellowLink:hover{
+	color:#F30;
+	text-decoration:underline;
+}
+
+.greenLink:link, .greenLink:visited, .greenLink:focus{
+	color:#009900;
+}
+
+.greenLink:hover{
+	color:#006600;
+	text-decoration:underline;
+}
+
+.yellowButton{
+	width:127px;
+	height:35px;
+	background:#f08200;
+	color:#FFF;
+	border:none;
+	border-radius:0px;
+	float:right;
+	margin-top:30px;
+	margin-right:20px;
+}
+
+.greenButton{
+	width:127px;
+	height:35px;
+	background:#009900;
+	color:#FFF;
+	border:none;
+	border-radius:0px;
+	float:right;
+	margin-top:30px;
+	margin-right:20px;
+}
+
+.infoLine{
+	padding:5px;
+	float:none;
+	height:32px;
+}
+
+.infoLineInner{
+	float:left;
+	padding:0 6px;
+}
+
+.col-md-4-1{
+	min-height:90px;
+	padding-left:2px;
+	padding-right:2px;
+	
+}

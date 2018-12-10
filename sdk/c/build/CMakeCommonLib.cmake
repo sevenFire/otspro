@@ -1,0 +1,65 @@
+#Setting Executable and Library Output Path
+ADD_LIBRARY(${TARGET_NAME} ${LIB_TYPE} ${SRCS})
+
+#if lib type is shared library
+IF(LIB_TYPE MATCHES "SHARED")
+	##############################################################################################################
+	# Add this to Resolve "relocations remain against allocatable but non-writable sections and relocation error"#
+	##############################################################################################################	
+	IF(UNIX)
+	    #TODO redhat linux
+		#MESSAGE("CMAKE_SYSTEM_NAME=" ${CMAKE_SYSTEM_NAME})
+        IF(${CMAKE_SYSTEM_NAME} MATCHES LINUX)
+			SET(CMAKE_SHARED_LINKER_FLAGS "-mimpure-text")
+        ENDIF(${CMAKE_SYSTEM_NAME} MATCHES LINUX)
+
+		IF(${CMAKE_SYSTEM_NAME} MATCHES HP-UX)
+			SET(LINK_LIBS ${LINK_LIBS} Csup std_v2)
+		ENDIF(${CMAKE_SYSTEM_NAME} MATCHES HP-UX)
+
+	ENDIF(UNIX)	
+
+	TARGET_LINK_LIBRARIES(${TARGET_NAME} ${LINK_LIBS})
+
+	IF(${CMAKE_SYSTEM_NAME} MATCHES Windows)
+		#MESSAGE("Windows Shared")
+		#SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${EXE_DIR})
+		#SET(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${LIB_DIR})
+	ELSE(${CMAKE_SYSTEM_NAME} MATCHES Windows)
+	    IF(${CMAKE_SYSTEM_NAME} MATCHES HP-UX)
+
+        ELSE(${CMAKE_SYSTEM_NAME} MATCHES HP-UX)
+			SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "-fPIC")
+        ENDIF(${CMAKE_SYSTEM_NAME} MATCHES HP-UX)
+	    
+		#MESSAGE("Unix Shared")
+		INSTALL(TARGETS ${TARGET_NAME} 
+				LIBRARY DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${EXE_DIR})
+		# in unix system must cp to lib
+		INSTALL(TARGETS ${TARGET_NAME} 
+				LIBRARY DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${LIB_DIR})
+				
+	ENDIF(${CMAKE_SYSTEM_NAME} MATCHES Windows)
+ENDIF(LIB_TYPE MATCHES "SHARED")
+
+IF(LIB_TYPE MATCHES "STATIC")
+		IF(${CMAKE_SYSTEM_NAME} MATCHES LINUX)
+			SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "-fPIC")
+		ENDIF(${CMAKE_SYSTEM_NAME} MATCHES LINUX)
+ENDIF(LIB_TYPE MATCHES "STATIC")
+
+
+IF (CMAKE_SYSTEM_NAME MATCHES Windows)	
+	SET(CMAKE_C_FLAGS_RELEASE     "/Zi /MD")
+	SET(CMAKE_CXX_FLAGS_RELEASE   "${CMAKE_CXX_FLAGS_RELEASE} /Zi /MD")
+
+	#add /MP (MultiProcessor) Option to increase building speed!
+	SET_TARGET_PROPERTIES( ${TARGET_NAME} PROPERTIES COMPILE_FLAGS "/MP" )
+	SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES LINK_FLAGS "/ignore:4049  /ignore:4217" )  
+	
+   if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+     ADD_DEFINITIONS(-DWIN64)
+     MESSAGE("$$$ WIN64 build $$$")
+   endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+
+ENDIF (CMAKE_SYSTEM_NAME MATCHES Windows)

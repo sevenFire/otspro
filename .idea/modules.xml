@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/client/xinsight-ots-client.iml" filepath="$PROJECT_DIR$/client/xinsight-ots-client.iml" />
+      <module fileurl="file://$PROJECT_DIR$/common/xinsight-ots-common.iml" filepath="$PROJECT_DIR$/common/xinsight-ots-common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/coprocessor/xinsight-ots-coprocessor.iml" filepath="$PROJECT_DIR$/coprocessor/xinsight-ots-coprocessor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/datasource/xinsight-ots-datasource.iml" filepath="$PROJECT_DIR$/datasource/xinsight-ots-datasource.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mapreduce/xinsight-ots-mapreduce.iml" filepath="$PROJECT_DIR$/mapreduce/xinsight-ots-mapreduce.iml" />
+      <module fileurl="file://$PROJECT_DIR$/xinsight-otspro.iml" filepath="$PROJECT_DIR$/xinsight-otspro.iml" />
+    </modules>
+  </component>
+</project>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" id="WebApp_ID" version="3.0">
+  <display-name>otscfgsvr</display-name>
+  <welcome-file-list>
+    <welcome-file>index.jsp</welcome-file>
+  </welcome-file-list>
+  <servlet>
+    <servlet-name>OTS Dashboard</servlet-name>
+    <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+    <init-param>
+      <param-name>com.sun.jersey.config.property.packages</param-name>
+      <param-value>com.baosight.xinsight.ots.cfgsvr.api</param-value>
+    </init-param>
+    <init-param>
+      <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <init-param>
+      <param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
+      <param-value>com.baosight.xinsight.ots.cfgsvr.filter.AuthorizationFilter</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>OTS Dashboard</servlet-name>
+    <url-pattern>/api/*</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <servlet-name>LogInitServlet</servlet-name>
+    <servlet-class>com.baosight.xinsight.ots.cfgsvr.servlet.LogInitServlet</servlet-class>
+    <init-param>
+        <!-- true(ignoring case) will be true, otherwise false -->        
+       	<param-name>Local_Debug_Mode</param-name>
+       	<param-value>true</param-value>
+    </init-param>
+    <load-on-startup>0</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+		<servlet-name>LogInitServlet</servlet-name>
+		<url-pattern>/servlet/config</url-pattern>
+  </servlet-mapping>  	
+
+  <filter> 
+	<filter-name>LicenseFilter</filter-name> 
+	<filter-class>com.baosight.xinsight.ots.cfgsvr.filter.LicenseFilter</filter-class> 
+  </filter> 
+  <filter-mapping> 
+	<filter-name>LicenseFilter</filter-name> 
+	<url-pattern>/*</url-pattern> 
+  </filter-mapping>
+  <filter>
+    <filter-name>NdcFilter</filter-name>
+    <filter-class>com.baosight.xinsight.ots.cfgsvr.filter.Log4jNdcFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>NdcFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+  <filter>
+    <filter-name>OTS Dashboard JSP</filter-name>
+    <filter-class>com.baosight.xinsight.ots.cfgsvr.filter.DashboardFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>OTS Dashboard JSP</filter-name>
+    <url-pattern>/dashboard/*</url-pattern>
+  </filter-mapping>
+  <listener>
+    <listener-class>com.baosight.xinsight.ots.cfgsvr.servlet.SystemListener</listener-class>
+  </listener>
+</web-app>
