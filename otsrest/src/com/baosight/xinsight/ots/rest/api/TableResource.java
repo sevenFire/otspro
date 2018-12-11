@@ -108,12 +108,15 @@ public class TableResource {
     }
 
 
+    //2018.12.10 创建表 lyh
     // @Consumes 指定接受的数据类型,也可以定义为一个集合.
     @POST
     @Path("/{tablename}")
     @Consumes({MediaType.TEXT_PLAIN, MediaType.APPLICATION_JSON})
     @Produces(MediaType.APPLICATION_JSON)
     public Response post(@PathParam("tablename") String tablename, String body) {
+        //todo 对表名进行校验
+
         if (tablename.equals(RestConstants.Query_all_tables)) {
             LOG.error(Response.Status.FORBIDDEN.name() + ":" + tablename + " is not a valid table object.");
             return Response.status(Response.Status.FORBIDDEN).type(MediaType.APPLICATION_JSON).entity(

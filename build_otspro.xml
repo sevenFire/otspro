@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="xInsight" default="main" basedir=".">
+	<property environment="env" />
+	<!--版本属性文件-->
+	<property file="otspro_version.properties" />
+	<!--路径属性文件-->
+	<property file="otspro_path.properties" />
+	<tstamp>
+		<format property="TODAY" pattern="yyyy-MM-dd_HH-mm-ss" locale="en" />
+	</tstamp>
+	
+	<target name="clean">
+		<delete dir="${source.root}/ots/otspro/otsrest/WebContent/WEB-INF/lib" />
+		<delete dir="${source.root}/ots/otspro/otscfgsvr/WebContent/WEB-INF/lib" />
+		<delete dir="${source.root}/ots/otspro/otsrest/WebContent/WEB-INF/classes" />
+		<delete dir="${source.root}/ots/otspro/otscfgsvr/WebContent/WEB-INF/classes" />
+	</target>
+	
+	<target name="init" depends="clean">
+		<!--for maven unittest reports-->
+		<!--todir 目标路径-->
+		<copy todir="${compile.mvnreport.dir}" flatten="true">
+			<fileset dir="${source.root}/common/public/target">
+				<include name="surefire-reports/*.*" />
+			</fileset>
+			<fileset dir="${source.root}/ots/otspro/common/target">
+				<include name="surefire-reports/*.*" />
+			</fileset>
+			<fileset dir="${source.root}/ots/otspro/client/target">
+				<include name="surefire-reports/*.*" />
+			</fileset>
+			<fileset dir="${source.root}/ots/otspro/coprocessor/target">
+				<include name="surefire-reports/*.*" />
+			</fileset>
+			<fileset dir="${source.root}/ots/otspro/mapreduce/target">
+				<include name="surefire-reports/*.*" />
+			</fileset>
+		</copy>
+
+	    <!--从packages目录中复制依赖-->
+		<mkdir dir="${lib.dir}/ots/otspro" />
+		<exec dir="${compile.bat.dir}/copy" executable="cmd.exe">
+			<env key="cdh.version" value="${cdh.version}" />
+			<arg line="/c ${compile.bat.dir}/copy/otspro.bat" />
+			<arg line="/c exit" />
+		</exec>
+
+		<mkdir dir="${output.dir}/ots/otspro" />
+		<mkdir dir="${output.dir}/ots/otspro/conf" />
+		<mkdir dir="${output.dir}/ots/otspro/template" />
+		<mkdir dir="${output.dir}/ots/otspro/index" />
+		<mkdir dir="${output.dir}/ots/otspro/sdk" />
+		<mkdir dir="${output.dir}/ots/otspro/sql" />
+		<mkdir dir="${output.dir}/ots/otspro/jars" />
+		<mkdir dir="${output.dir}/ots/otspro/wars" />
+	</target>
+	
+	<target name="compile-jar" depends="init">
+		<copy tofile="${output.dir}/ots/otspro/jars/xinsight-resources-${com.version}.jar" file="${source.root}/common/resources/target/xinsight-resources-${com.version}.jar" />
+		<copy tofile="${output.dir}/ots/otspro/jars/xinsight-common-${com.version}.jar" file="${source.root}/common/public/target/xinsight-common-${com.version}.jar" />
+		<copy tofile="${output.dir}/ots/otspro/jars/xinsight-ots-common-${otspro.version}.jar" file="${source.root}/ots/otspro/common/target/xinsight-ots-common-${otspro.version}.jar" />
+		<copy tofile="${output.dir}/ots/otspro/jars/xinsight-ots-client-${otspro.version}.jar" file="${source.root}/ots/otspro/client/target/xinsight-ots-client-${otspro.version}.jar" />
+		<copy tofile="${output.dir}/ots/otspro/jars/xinsight-ots-coprocessor-${otspro.version}.jar" file="${source.root}/ots/otspro/coprocessor/target/xinsight-ots-coprocessor-${otspro.version}.jar" />
+		<copy tofile="${output.dir}/ots/otspro/jars/xinsight-ots-mapreduce-${otspro.version}.jar" file="${source.root}/ots/otspro/mapreduce/target/xinsight-ots-mapreduce-${otspro.version}.jar" />
+		<copy tofile="${output.dir}/ots/otspro/jars/xinsight-ots-datasource-${otspro.version}.jar" file="${source.root}/ots/otspro/datasource/target/xinsight-ots-datasource-${otspro.version}.jar" />
+
+		<copy todir="${lib.dir}/ots/otspro" file="${output.dir}/ots/otspro/jars/xinsight-common-${com.version}.jar" />
+		<copy todir="${lib.dir}/ots/otspro" file="${output.dir}/ots/otspro/jars/xinsight-ots-common-${otspro.version}.jar" />
+		<copy todir="${lib.dir}/ots/otspro" file="${output.dir}/ots/otspro/jars/xinsight-ots-client-${otspro.version}.jar" />
+		
+		<path id="otspro_lib-classpath">
+			<fileset dir="${lib.dir}/ots/otspro">
+				<include name="**/*.jar" />
+			</fileset>
+		</path>
+	</target>
+	
+	<target name="jar" depends="compile-jar">
+		<pathconvert property="mf_otspro.classpath" pathsep=" ">
+			<mapper>
+				<chainedmapper>
+					<flattenmapper />
+					<!-- add lib/ prefix -->
+					<globmapper from="*" to="*" />
+				</chainedmapper>
+			</mapper>
+			<path refid="otspro_lib-classpath" />
+		</pathconvert>
+		
+		<pathconvert property="mf_otspro_mapreduce.classpath" pathsep=" ">
+			<mapper>
+				<chainedmapper>
+					<flattenmapper />
+					<!-- add lib/ prefix -->
+					<globmapper from="*" to="*" />
+				</chainedmapper>
+			</mapper>
+			<path refid="otspro_lib-classpath" />
+		</pathconvert>
+		<!--for apps-->
+	</target>
+	
+	<target name="compile-otspro" depends="jar">
+		<mkdir dir="${classes.dir}/otsrest" />
+		<mkdir dir="${classes.dir}/otscfgsvr" />
+		<copy todir="${source.root}/ots/otspro/otsrest/WebContent/WEB-INF/lib">
+			<fileset dir="${lib.dir}/ots/otspro">
+				<include name="*.*" />
+			</fileset>
+		</copy>
+		
+		<javac debug="on" fork="true" executable="${java.exec}" srcdir="${source.root}/ots/otspro/otsrest/src/" destdir="${classes.dir}/otsrest">
+			<compilerarg line="-encoding UTF-8" />
+			<classpath refid="otspro_lib-classpath" />
+		</javac>
+		
+		<jar update="true" compress="true" encoding="utf-8" destfile="${output.dir}/ots/otspro/jars/xinsight-otsrest-${otspro.version}.jar" basedir="${classes.dir}/otsrest">
+			<manifest>
+				<!--<attribute name="Main-class" value="${mainclass}"/>-->
+				<!--<attribute name="Class-Path" value="${mf_ots.classpath}"/>-->
+				<attribute name="Built-By" value="${xinsight.builder}" />
+				<section name="common">
+					<!--<attribute name="Specification-Title" value="${component.name}" />-->
+					<attribute name="Specification-Version" value="${xinsight.version}" />
+					<attribute name="Specification-Vendor" value="${xinsight.vendor}" />
+					<!--<attribute name="Implementation-Title" value="${component.name}" />-->
+					<attribute name="Implementation-Version" value="${xinsight.version}-${otspro.version} ${TODAY}" />
+					<attribute name="Implementation-Vendor" value="${xinsight.vendor}" />
+				</section>
+			</manifest>
+		</jar>
+
+		<copy todir="${lib.dir}/ots/otspro" file="${output.dir}/ots/otspro/jars/xinsight-otsrest-${otspro.version}.jar" />
+		
+		<copy todir="${source.root}/ots/otspro/otscfgsvr/WebContent/WEB-INF/lib">
+			<fileset dir="${lib.dir}/ots/otspro">
+				<include name="*.*" />
+			</fileset>
+		</copy>
+		
+		<javac debug="on" fork="true" executable="${java.exec}" srcdir="${source.root}/ots/otspro/otscfgsvr/src/" destdir="${classes.dir}/otscfgsvr">
+			<compilerarg line="-encoding UTF-8" />
+			<classpath refid="otspro_lib-classpath" />
+		</javac>
+	</target>
+	
+	<target name="otspro" depends="compile-otspro">
+		<copy todir="${source.root}/ots/otspro/otscfgsvr/WebContent/WEB-INF/classes">
+			<fileset dir="${source.root}/ots/otspro/otscfgsvr/src">
+				<include name="*.*" />
+			</fileset>
+		</copy>
+		
+		<copy todir="${source.root}/ots/otspro/otscfgsvr/WebContent/WEB-INF/classes/template">
+			<fileset dir="${source.root}/ots/otspro/solr_template/template" />
+		</copy>
+		
+		<war destfile="${output.dir}/ots/otspro/wars/otscfgsvr.war" webxml="${source.root}/ots/otspro/otscfgsvr/WebContent/WEB-INF/web.xml">
+			<fileset dir="${source.root}/ots/otspro/otscfgsvr/WebContent">
+				<include name="**/**.*" />
+				<exclude name="**/*.jar" />
+				<exclude name="**/*.class" />
+			</fileset>
+			<lib dir="${source.root}/ots/otspro/otscfgsvr/WebContent/WEB-INF/lib" />
+			<classes dir="${classes.dir}/otscfgsvr" />
+			<manifest>
+				<attribute name="Built-By" value="${xinsight.builder}" />
+				<section name="common">
+					<!--<attribute name="Specification-Title" value="${component.name}" />-->
+					<attribute name="Specification-Version" value="${xinsight.version}" />
+					<attribute name="Specification-Vendor" value="${xinsight.vendor}" />
+					<!--<attribute name="Implementation-Title" value="${component.name}" />-->
+					<attribute name="Implementation-Version" value="${xinsight.version}-${ots.version} ${TODAY}" />
+					<attribute name="Implementation-Vendor" value="${xinsight.vendor}" />
+				</section>
+			</manifest>
+		</war>
+		
+		<copy todir="${source.root}/ots/otspro/otsrest/WebContent/WEB-INF/classes">
+			<fileset dir="${source.root}/ots/otspro/otsrest/src">
+				<include name="*.*" />
+			</fileset>
+		</copy>
+		
+		<copy todir="${source.root}/ots/otspro/otsrest/WebContent/WEB-INF/classes/template">
+			<fileset dir="${source.root}/ots/otspro/solr_template/template" />
+		</copy>
+		
+		<war destfile="${output.dir}/ots/otspro/wars/otsrest.war" webxml="${source.root}/ots/otspro/otsrest/WebContent/WEB-INF/web.xml">
+			<fileset dir="${source.root}/ots/otspro/otsrest/WebContent">
+				<include name="**/**.*" />
+				<exclude name="**/*.jar" />
+				<exclude name="**/*.class" />
+			</fileset>
+			<lib dir="${source.root}/ots/otspro/otsrest/WebContent/WEB-INF/lib" />
+			<classes dir="${classes.dir}/otsrest" />
+			<manifest>
+				<attribute name="Built-By" value="${xinsight.builder}" />
+				<section name="common">
+					<!--<attribute name="Specification-Title" value="${component.name}" />-->
+					<attribute name="Specification-Version" value="${xinsight.version}" />
+					<attribute name="Specification-Vendor" value="${xinsight.vendor}" />
+					<!--<attribute name="Implementation-Title" value="${component.name}" />-->
+					<attribute name="Implementation-Version" value="${xinsight.version}-${ots.version} ${TODAY}" />
+					<attribute name="Implementation-Vendor" value="${xinsight.vendor}" />
+				</section>
+			</manifest>
+		</war>
+		
+		<mkdir dir="${output.dir}/ots/otspro/sdk/python" />
+		<copy todir="${output.dir}/ots/otspro/sdk/python">
+			<fileset dir="${source.root}/ots/otspro/sdk/python" />
+		</copy>
+		<copy todir="${output.dir}/ots/otspro/conf" file="${source.root}/ots/otspro/otscfgsvr/src/conf.properties" />
+		<copy todir="${output.dir}/ots/otspro/sql">
+			<fileset dir="${source.root}/common/sql">
+				<include name="**/otspro_*.sql" />
+			</fileset>
+		</copy>
+		<copy todir="${output.dir}/ots/otspro/template">
+			<fileset dir="${source.root}/ots/otspro/solr_template/template" />
+		</copy>
+
+		<!--
+	    <zip destfile="${output.base.dir}/ots-cdh${cdh.version}-${branch.name}${TODAY}.zip" comment="${xinsight.version}-${ots.version}-${TODAY}">
+            <fileset dir="${output.dir}/ots">
+                <include name="**/**" />
+            </fileset>
+        </zip>
+        -->
+	</target>
+	
+	<target name="main" depends="otspro">
+	</target>
+</project>
+
+
