@@ -205,40 +205,40 @@ public class OtsAdmin {
         }
     }
 
-    //待删除
-    public void createHbaseTable(long tenantid,  String tablename, String compressType, Integer maxVersion,
-                                 Boolean mobEnable, Integer mobTheshold, Boolean bReplication) throws OtsException {
-        Admin admin = null;
-
-        try {
-            admin = ConnectionUtil.getInstance().getAdmin();
-            TableProvider.createTable(admin, String.valueOf(tenantid), compressType, maxVersion, mobEnable, mobTheshold, bReplication);
-        } catch (MasterNotRunningException e) {
-            e.printStackTrace();
-            throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_NO_RUNNING_HBASE_MASTER,
-                    "Failed to create table because hbase master no running!\n" + e.getMessage());
-        } catch (ZooKeeperConnectionException e) {
-            e.printStackTrace();
-            throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_FAILED_CONN_ZK,
-                    "Failed to create table because can not connecto to zookeeper!\n" + e.getMessage());
-        } catch (TableException e) {
-            e.printStackTrace();
-            throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_CREATE,
-                    "Failed to create table!\n" + e.getMessage());
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_CREATE,
-                    "Failed to create table!\n" + e.getMessage());
-        } finally {
-            try {
-                if (admin != null) {
-                    admin.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
+//    //待删除
+//    public void createHbaseTable(long tenantid,  String tablename, String compressType, Integer maxVersion,
+//                                 Boolean mobEnable, Integer mobTheshold, Boolean bReplication) throws OtsException {
+//        Admin admin = null;
+//
+//        try {
+//            admin = ConnectionUtil.getInstance().getAdmin();
+//            TableProvider.createTable(admin, String.valueOf(tenantid), compressType, maxVersion, mobEnable, mobTheshold, bReplication);
+//        } catch (MasterNotRunningException e) {
+//            e.printStackTrace();
+//            throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_NO_RUNNING_HBASE_MASTER,
+//                    "Failed to create table because hbase master no running!\n" + e.getMessage());
+//        } catch (ZooKeeperConnectionException e) {
+//            e.printStackTrace();
+//            throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_FAILED_CONN_ZK,
+//                    "Failed to create table because can not connecto to zookeeper!\n" + e.getMessage());
+//        } catch (TableException e) {
+//            e.printStackTrace();
+//            throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_CREATE,
+//                    "Failed to create table!\n" + e.getMessage());
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_CREATE,
+//                    "Failed to create table!\n" + e.getMessage());
+//        } finally {
+//            try {
+//                if (admin != null) {
+//                    admin.close();
+//                }
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//    }
 
     public void createHbaseTable(long tenantid,  String compressType, Integer maxVersion,
                                  Boolean mobEnable, Integer mobTheshold, Boolean bReplication) throws OtsException {
@@ -314,32 +314,32 @@ public class OtsAdmin {
         }
     }
 
-    //todo 待删除
-	public boolean isHbaseTableExist(long userid, long tenantid, String tablename) throws Exception {
-
-		Admin admin = null;
-		try {
-			admin = ConnectionUtil.getInstance().getAdmin();
-			return TableProvider.isTableExist(admin, String.valueOf(tenantid), tablename);
-		} catch (MasterNotRunningException e) {
-			throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_NO_RUNNING_HBASE_MASTER,
-					"Failed to check table exist or not because hbase master no running!\n" + e.getMessage());
-		} catch (ZooKeeperConnectionException e) {
-			throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_FAILED_CONN_ZK,
-					"Failed to check table exist or not because can not connecto to zookeeper!\n" + e.getMessage());
-		} catch (IOException e) {
-			throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST,
-					"Failed to check table exist or not!\n" + e.getMessage());
-		} finally {
-			try {
-				if (admin != null) {
-					admin.close();
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
+//    //todo 待删除
+//	public boolean isHbaseTableExist(long userid, long tenantid, String tablename) throws Exception {
+//
+//		Admin admin = null;
+//		try {
+//			admin = ConnectionUtil.getInstance().getAdmin();
+//			return TableProvider.isTableExist(admin, String.valueOf(tenantid), tablename);
+//		} catch (MasterNotRunningException e) {
+//			throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_NO_RUNNING_HBASE_MASTER,
+//					"Failed to check table exist or not because hbase master no running!\n" + e.getMessage());
+//		} catch (ZooKeeperConnectionException e) {
+//			throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_FAILED_CONN_ZK,
+//					"Failed to check table exist or not because can not connecto to zookeeper!\n" + e.getMessage());
+//		} catch (IOException e) {
+//			throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST,
+//					"Failed to check table exist or not!\n" + e.getMessage());
+//		} finally {
+//			try {
+//				if (admin != null) {
+//					admin.close();
+//				}
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
+//		}
+//	}
 
     public boolean isHbaseTableExist(long tenantid) throws Exception {
 

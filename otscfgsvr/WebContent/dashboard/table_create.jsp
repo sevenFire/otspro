@@ -661,7 +661,7 @@
         $('#tc_tableColumn' + (tableAddColumnId-1)).remove();
 //        $(obj).parents(".tablebg2").remove();//parents不可靠
 //        $(obj).closest(".tablebg2").remove();//id
-        tableAddColumnId--;
+        tableAddColumnId--;//不用减id
     }
 
 
@@ -699,34 +699,34 @@
             var url = "/otscfgsvr/api/table/";
             var ots_tableName = $("#tc_tableName").val();
             url += ots_tableName;
-            alert("创建表");
-            return;
+//            alert("创建表");
+//            return;
 
-//        $.ajax({
-//            type: "POST",
-//            url: url,
-//            data: JSON.stringify(tableCreateMap),
-//            dataType: "json",
-//            contentType: "application/json",
-//            timeout: 30000,
-//            success: function (results, msg) {
-//                debugger;
-//                $("#tableCreateStatus").html("");
-//                $("#tableCreateStatus").append("创建表").append(errorInfo(results["errcode"]));
-//                if(results["errcode"] == 0)
-//                    getTableInfo();
-//					$("#tc_forward2");removeAttr("disabled");
-//					$("#tc_forward2").css("background-color","white");
-//					$("#wizard-step3").attr("class", "complete");
-//            },
-//            error: function(msg){
-//                $("#tableCreateStatus").html("");
-//                var errmsg = "创建表失败！错误: " + getStructMsg(msg);
-//                if (errmsg.indexOf("Forbidden") >= 0)
-//                    errmsg += "（用户缺失创建表的权限！）";
-//                $("#tableCreateStatus").append(errmsg);
-//            }
-//        });
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: JSON.stringify(tableCreateMap),
+            dataType: "json",
+            contentType: "application/json",
+            timeout: 30000,
+            success: function (results, msg) {
+                debugger;
+                $("#tableCreateStatus").html("");
+                $("#tableCreateStatus").append("创建表").append(errorInfo(results["errcode"]));
+                if(results["errcode"] == 0)
+                    getTableInfo();
+					$("#tc_forward2");removeAttr("disabled");
+					$("#tc_forward2").css("background-color","white");
+					$("#wizard-step3").attr("class", "complete");
+            },
+            error: function(msg){
+                $("#tableCreateStatus").html("");
+                var errmsg = "创建表失败！错误: " + getStructMsg(msg);
+                if (errmsg.indexOf("Forbidden") >= 0)
+                    errmsg += "（用户缺失创建表的权限！）";
+                $("#tableCreateStatus").append(errmsg);
+            }
+        });
 
         }
 

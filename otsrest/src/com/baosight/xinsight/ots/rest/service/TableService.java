@@ -286,7 +286,9 @@ public class TableService {
      */
     public static boolean innerHbaseTableExist(long userid, long tenantid, String tablename) throws OtsException {
         try {
-            return ConfigUtil.getInstance().getOtsAdmin().isHbaseTableExist(userid, tenantid, tablename);
+//            return ConfigUtil.getInstance().getOtsAdmin().isHbaseTableExist(userid, tenantid, tablename);
+            // todo 改成返回大表的
+            return ConfigUtil.getInstance().getOtsAdmin().isHbaseTableExist(tenantid);
         } catch (MasterNotRunningException e) {
             throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_NO_RUNNING_HBASE_MASTER, "Failed to check table exist or not because hbase master no running!\n" + e.getMessage());
         } catch (ZooKeeperConnectionException e) {
@@ -307,9 +309,14 @@ public class TableService {
      */
     public static boolean innerHbaseCreateTable(long userid, long tenantid, String tablename, TableCreateModel model) throws OtsException {
         try {
-            ConfigUtil.getInstance().getOtsAdmin().createHbaseTable(tenantid, tablename, 
-            		model.hasCompressionType() ? convertCompression(model.getCompressionType()) : Algorithm.NONE.getName(), 
-            		model.getMaxVersions(), model.getMobEnabled(), model.getMobThreshold(), model.hasReplication());
+//            ConfigUtil.getInstance().getOtsAdmin().createHbaseTable(tenantid, tablename,
+//            		model.hasCompressionType() ? convertCompression(model.getCompressionType()) : Algorithm.NONE.getName(),
+//            		model.getMaxVersions(), model.getMobEnabled(), model.getMobThreshold(), model.hasReplication());
+
+
+            ConfigUtil.getInstance().getOtsAdmin().createHbaseTable(tenantid,
+                    model.hasCompressionType() ? convertCompression(model.getCompressionType()) : Algorithm.NONE.getName(),
+                    model.getMaxVersions(), model.getMobEnabled(), model.getMobThreshold(), model.hasReplication());
         } catch (OtsException e) {
             throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, "Failed to check table exist or not!\n" + e.getMessage());
         } catch (Exception e) {

@@ -85,8 +85,8 @@
                                onclick="clickCreateTable();" data-toggle="modal" data-target="#tableCreate">
                         <input name="" type="button" class="btn" style="width: 80px;" value="批量删除"
                                onclick="clickDeleteMultiTables();" data-method="remove">
-                        <input name="" type="button" class="btn" style="width: 70px;" value="恢复表"
-                               onclick="clickRestoreTable();" data-toggle="modal" data-target="#tableRestore">
+                        <%--<input name="" type="button" class="btn" style="width: 70px;" value="恢复表"--%>
+                               <%--onclick="clickRestoreTable();" data-toggle="modal" data-target="#tableRestore">--%>
                     </div>
                 </div>
             </c:if>
@@ -95,11 +95,13 @@
                 <tr>
                     <th data-field="state" data-checkbox="true"></th>
                     <th data-field="table_name" data-align="center" data-formatter="nameFormatter">表名</th>
-                    <th data-field="primary_key_type" data-align="center" data-formatter="primaryKeyTypeFormatter">主键类型</th>
-                    <th data-field="compression_type" data-align="center" data-formatter="compressionFormatter">压缩算法</th>
-                    <!-- <th data-field="mob_enabled" data-align="center" data-formatter="mobFormatter">是否支持Mob</th> -->
-                    <!-- <th data-field="mob_threshold" data-align="center">阈值（KB）</th> -->
+                    <%--修改2018.11.23--%>
+                    <th data-field="create_time" data-align="center" data-formatter="createTime">创建时间</th>
+                    <th data-field="last_modified_time" data-align="center" data-formatter="lastModifiedTime">最后修改时间</th>
+                    <th data-field="creator" data-align="center">创建者</th>
+                    <th data-field="last_modified_person" data-align="center" >最后修改者</th>
                     <th data-field="description" data-align="center" data-formatter="descFormatter">描述</th>
+
                     <th class="col-operate-operation" data-field="operate" data-align="center"
                         data-formatter="operateFormatter" data-events="operateEvents">操作</th>
                 </tr>
@@ -114,7 +116,7 @@
 <!---dialog: table--->
 <div class="modal text-center" id="tableCreate" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
      aria-hidden="true">
-    <div class="modal-dialog" style="display: inline-block; width: auto;">
+    <div class="modal-dialog" style="display: inline-block; width: 850px;">
         <div class="modal-content"></div>
     </div>
 </div>
@@ -124,28 +126,30 @@
         <div class="modal-content"></div>
     </div><!-- /.modal -->
 </div>
-<div class="modal text-center" id="tableBackup" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" style="display: inline-block; width: auto;">
-        <div class="modal-content"></div>
-    </div><!-- /.modal -->
-</div>
-<div class="modal text-center" id="tableRestore" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" style="display: inline-block; width: auto;">
-        <div class="modal-content"></div>
-    </div><!-- /.modal -->
-</div>
+<%--<div class="modal text-center" id="tableBackup" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"--%>
+     <%--aria-hidden="true">--%>
+    <%--<div class="modal-dialog" style="display: inline-block; width: auto;">--%>
+        <%--<div class="modal-content"></div>--%>
+    <%--</div><!-- /.modal -->--%>
+<%--</div>--%>
+<%--<div class="modal text-center" id="tableRestore" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"--%>
+     <%--aria-hidden="true">--%>
+    <%--<div class="modal-dialog" style="display: inline-block; width: auto;">--%>
+        <%--<div class="modal-content"></div>--%>
+    <%--</div><!-- /.modal -->--%>
+<%--</div>--%>
 <div>
-    <div class="modal text-center" id="tablePermission" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog" style="display: inline-block; width: 650px;">
-            <div class="modal-content"></div>
-        </div><!-- /.modal -->
-    </div>
+    <%--<div class="modal text-center" id="tablePermission" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"--%>
+         <%--aria-hidden="true">--%>
+        <%--<div class="modal-dialog" style="display: inline-block; width: 650px;">--%>
+            <%--<div class="modal-content"></div>--%>
+        <%--</div><!-- /.modal -->--%>
+    <%--</div>--%>
     <div>
         <jsp:include page="errorTips.jsp"/>
     </div>
+    <%--加<div>--%>
+</div>
 </body>
 
 <script type="text/javascript">
@@ -160,9 +164,16 @@
     var resource_desc = "";
     var resource_disp = "";
 
+    //todo 模拟数据
+//    var wls_datas = [];
+//    wls_datas[0]={"table_name":"hahaha1","description":"heheheh1","create_time":"2018-12-03 15:25:24","last_modified_time":"2018-12-03 15:25:24","creator":"wls","last_modified_person":"wls"};
+//    wls_datas[1]={"table_name":"hahaha2","description":"heheheh2","create_time":"2018-12-03 15:25:24","last_modified_time":"2018-12-03 15:25:24","creator":"wls","last_modified_person":"wls"};
+//
+
     $(function () {
         $('#tableManage').bootstrapTable({
             data: [],
+//            data: wls_datas,
             classes: 'table',
             striped: true,
             pagination: true,
@@ -181,6 +192,7 @@
         /* $('#tableManage').on('pre-body.bs.table', function (data, rows) {
             getBackupStatus(rows);
          }); */
+        //后台得到数据
         getTableInfo();
     });
 
@@ -273,8 +285,8 @@
 
     function operateFormatter(value, row, index) {
         var operate = [
-            '<div class="progress progress-striped" id="tableProgress' + index + '" style="margin-bottom:5px;display:none"><div class="progress-bar" id="tableProgressBar' + index + '" role="progressbar" style="width:' + row["progress"] + '">',
-            '<span class="progress_text">正在进行备份/恢复……</div></div>',
+//            '<div class="progress progress-striped" id="tableProgress' + index + '" style="margin-bottom:5px;display:none"><div class="progress-bar" id="tableProgressBar' + index + '" role="progressbar" style="width:' + row["progress"] + '">',
+//            '<span class="progress_text">正在进行备份/恢复……</div></div>',
             '<div id="tableButton' + index + '" style="display:block">',
             '<input name="" type="button" class="edit btn3" style="width:40px;" value="编辑" data-toggle="modal" data-target="#tableUpdate">',
             '&nbsp;&nbsp;',
@@ -282,19 +294,20 @@
             '<input name="" type="button" class="delete btn3" style="width:40px;" value="删除" data-method="remove">',
             '&nbsp;&nbsp;',
             ' </c:if >',
-            '<input name="" type="button" class="backup btn3" style="width:40px;" value="备份" data-toggle="modal" data-target="#tableBackup">',
-            '&nbsp;&nbsp;',
-            ' <c:if test="${test.hasAuthPerm }">',
-            '<input name="" type="button" class="permit btn3" style="width:40px;" value="授权"  data-toggle="modal" data-target="#tablePermission">',
-            ' </c:if >',
-            '&nbsp;&nbsp;',
-            '<div id="tableState' + index + '" class="r_text10" style="float:right;'
+            <%--'<input name="" type="button" class="backup btn3" style="width:40px;" value="备份" data-toggle="modal" data-target="#tableBackup">',--%>
+            <%--'&nbsp;&nbsp;',--%>
+            <%--' <c:if test="${test.hasAuthPerm }">',--%>
+            <%--'<input name="" type="button" class="permit btn3" style="width:40px;" value="授权"  data-toggle="modal" data-target="#tablePermission">',--%>
+            <%--' </c:if >',--%>
+            <%--'&nbsp;&nbsp;',--%>
+//            '<div id="tableState' + index + '" class="r_text10" style="float:right;'
         ];
 
-        if (!row["result"] || row["result"] == 0) {
-            operate.push('display:none;');
-        }
-        operate.push('">备份/恢复失败！</div>');
+//        if (!row["result"] || row["result"] == 0) {
+//            operate.push('display:none;');
+//        }
+        //这个</div>很关键！这里与上面的最后一个<div对应，如果去掉，则所有的记录会出现在同一行
+//        operate.push('">备份/恢复失败！</div>');
 
         return operate.join('');
     }
@@ -306,15 +319,15 @@
         'click .delete': function (e, value, row, index) {
             clickDeleteTable(row);
         },
-        'click .backup': function (e, value, row, index) {
-            clickBackupTable(row, index);
-        },
-        'click .permit': function (e, value, row, index) {
-            clickPermitTable(row);
-        },
-        'click .deletePermission': function (e, value, row, index) {
-            deletePermission(row, index);
-        }
+//        'click .backup': function (e, value, row, index) {
+//            clickBackupTable(row, index);
+//        },
+//        'click .permit': function (e, value, row, index) {
+//            clickPermitTable(row);
+//        },
+//        'click .deletePermission': function (e, value, row, index) {
+//            deletePermission(row, index);
+//        }
 
     };
 
@@ -512,49 +525,49 @@
         });
     }
 
-    $('#tableBackup').on("show.bs.modal", function () {
-        $(this).removeData("bs.modal");
-    });
-
-    function clickBackupTable(editRow, rowIndex) {
-        modal_table_name = editRow["table_name"];
-        table_row_index = rowIndex;
-        modal_table_row = editRow;
-        $("#tableBackup").modal({
-            backdrop: "static",
-            show: false,
-            remote: "table_backup.jsp"
-        });
-    }
-
-    $('#tableRestore').on("show.bs.modal", function () {
-        $(this).removeData("bs.modal");
-    });
-
-    function clickRestoreTable() {
-        all_table_info = all_table_info_;
-        $("#tableRestore").modal({
-            backdrop: "static",
-            show: false,
-            remote: "table_restore.jsp"
-        });
-    }
-
-    $('#tablePermission').on("show.bs.modal", function () {
-        $(this).removeData("bs.modal");
-    });
-
-    function clickPermitTable(row_param) {
-        propType = row_param["prop_type"];
-        table_id = row_param["id"];
-        resource_desc = row_param["description"];
-        resource_disp = row_param["table_name"];
-        $("#tablePermission").modal({
-            backdrop: "static",
-            show: false,
-            remote: "add_permit_object.jsp",
-        });
-    }
+//    $('#tableBackup').on("show.bs.modal", function () {
+//        $(this).removeData("bs.modal");
+//    });
+//
+//    function clickBackupTable(editRow, rowIndex) {
+//        modal_table_name = editRow["table_name"];
+//        table_row_index = rowIndex;
+//        modal_table_row = editRow;
+//        $("#tableBackup").modal({
+//            backdrop: "static",
+//            show: false,
+//            remote: "table_backup.jsp"
+//        });
+//    }
+//
+//    $('#tableRestore').on("show.bs.modal", function () {
+//        $(this).removeData("bs.modal");
+//    });
+//
+//    function clickRestoreTable() {
+//        all_table_info = all_table_info_;
+//        $("#tableRestore").modal({
+//            backdrop: "static",
+//            show: false,
+//            remote: "table_restore.jsp"
+//        });
+//    }
+//
+//    $('#tablePermission').on("show.bs.modal", function () {
+//        $(this).removeData("bs.modal");
+//    });
+//
+//    function clickPermitTable(row_param) {
+//        propType = row_param["prop_type"];
+//        table_id = row_param["id"];
+//        resource_desc = row_param["description"];
+//        resource_disp = row_param["table_name"];
+//        $("#tablePermission").modal({
+//            backdrop: "static",
+//            show: false,
+//            remote: "add_permit_object.jsp",
+//        });
+//    }
 
     function getBackupStatus() {
         $.ajax({
