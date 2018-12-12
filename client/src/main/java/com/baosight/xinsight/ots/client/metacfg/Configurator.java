@@ -13,6 +13,8 @@ import java.util.List;
 import com.baosight.xinsight.ots.OtsErrorCode;
 import com.baosight.xinsight.ots.client.exception.ConfigException;
 import com.baosight.xinsight.ots.client.exception.PermissionSqlException;
+import com.baosight.xinsight.ots.client.pojo.OTSUserTable;
+import com.baosight.xinsight.ots.constants.TableConstants;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -91,34 +93,42 @@ public class Configurator {
 			throw new ConfigException(OtsErrorCode.EC_RDS_FAILED_CLOSE_CONN, e.getMessage());
 		}
 	}
-	
-	public long addTable(Table table) throws ConfigException	{
+
+	//新增表
+	public long addTable(OTSUserTable otsUserTable) throws ConfigException	{
 		long id = 0;
-		
-		try { 
+
+		try {
 			connect();
 			conn.setAutoCommit(false);
-			String sql = String.format("insert into ots_user_table (\"uid\", \"name\", \"compression\", \"mob_enabled\", \"mob_threshold\", \"desc\", \"enable\", \"maxversion\", \"tid\", \"keytype\", \"hashkey_type\", \"rangekey_type\", \"create_time\", \"modify_time\", \"modify_uid\") values ('%d', '%s', '%s', '%d', '%d', '%s', '%d', '%d', '%d', ? , ? , ? , ? , ? , ?) returning id;",
-					table.getUid(), table.getName(), table.getCompression(), table.getMobEnabled(), table.getMobThreshold(),  table.getDesp(), table.getEnable(), table.getMaxversion(), table.getTid());
-			
-			PreparedStatement pstmt = conn.prepareStatement(sql);			
-			pstmt.setInt(1, table.getKeytype());
-			pstmt.setInt(2, table.getHashkeyType());
-			pstmt.setInt(3, table.getRangekeyType());
-			pstmt.setTimestamp(4, new Timestamp(table.getCreateTime().getTime()));
-			pstmt.setTimestamp(5, new Timestamp(table.getModifyTime().getTime()));
-			pstmt.setLong(6, table.getModifyUid());				
-			//System.out.println(pstmt.toString());
-			LOG.debug(pstmt.toString());
-			
-			pstmt.execute();
-			ResultSet rs = pstmt.getResultSet();			
-			if(rs.next()){
-				id = rs.getLong("id");
-			}
-			conn.commit();
-			conn.setAutoCommit(true);
-			pstmt.close();
+
+			List<Object> paramList = new ArrayList<Object>();
+
+//			String sql = String.format("insert into ots_user_table " +
+//							" (\"table_id\", \"user_id\", \"tenant_id\", \"table_name\", \"table_desc\", \"primary_key\", \"table_columns\", \"create_time\", \"modify_time\", \"creator\", \"modifier\") " +
+//							" values ('%d', '%d', '%d', '%s', '%d', '%s', '%d', '%d', '%d', ? , ? , ? , ? , ? , ?) returning id;",
+//					table.getUid(), table.getName(), table.getCompression(), table.getMobEnabled(), table.getMobThreshold(),  table.getDesp(), table.getEnable(), table.getMaxversion(), table.getTid());
+//
+//			LOG.debug(sql);
+////
+//			PreparedStatement pstmt = conn.prepareStatement(sql);
+//			pstmt.setInt(1, table.getKeytype());
+//			pstmt.setInt(2, table.getHashkeyType());
+//			pstmt.setInt(3, table.getRangekeyType());
+//			pstmt.setTimestamp(4, new Timestamp(table.getCreateTime().getTime()));
+//			pstmt.setTimestamp(5, new Timestamp(table.getModifyTime().getTime()));
+//			pstmt.setLong(6, table.getModifyUid());
+//			//System.out.println(pstmt.toString());
+//			LOG.debug(pstmt.toString());
+//
+//			pstmt.execute();
+//			ResultSet rs = pstmt.getResultSet();
+//			if(rs.next()){
+//				id = rs.getLong("id");
+//			}
+//			conn.commit();
+//			conn.setAutoCommit(true);
+//			pstmt.close();
 		} catch (SQLException e) {
 			try {
 				conn.rollback();
@@ -179,47 +189,93 @@ public class Configurator {
 
 		return ;	
 	}
-	
-	public Table queryTable(long tenantid, String tableName) throws ConfigException	{
-		Table table = null;
-		
+
+	/**
+	 * 判定表是否存在
+	 * @param userid
+	 * @param tableName
+	 * @return
+	 * @throws ConfigException
+	 */
+	public Boolean ifExistTable(long userid, String tableName) throws ConfigException {
+		Statement st = null;
 		try {
 			connect();
-			
-			Statement st = conn.createStatement();
-			String sql = String.format("select * from ots_user_table where ots_user_table.name = '%s' and ots_user_table.tid = '%d';", tableName, tenantid);
-			//System.out.println(sql);
+
+			st = conn.createStatement();
+			String sql = String.format("select count(1) from ots_user_table where ots_user_table.table_name = '%s' and ots_user_table.user_id = '%d';", tableName, userid);
 			LOG.debug(sql);
-						
+
+			ResultSet rs = st.executeQuery(sql);
+			if (rs.next() && rs.getInt(1)>0) {
+				return true;
+			} else return false;
+
+		} catch (SQLException e) {
+			throw new ConfigException(OtsErrorCode.EC_RDS_FAILED_QUERY_TABLE, "Failed to query table " + tableName + "!\n" + e.getMessage());
+		} finally {
+			try {
+				st.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	/**
+	 * 查询并返回表的详细信息
+	 * @param userid
+	 * @param tableName
+	 * @return
+	 * @throws ConfigException
+	 */
+	public OTSUserTable queryTable(long userid, String tableName) throws ConfigException{
+		OTSUserTable table = null;
+
+		try {
+			connect();
+
+			Statement st = conn.createStatement();
+			String sql = String.format("select * from ots_user_table where ots_user_table.table_name = '%s' and ots_user_table.userid = '%d';", tableName, userid);
+			LOG.debug(sql);
+
 			ResultSet rs = st.executeQuery(sql);
 			if(rs.next()) {
-				table = new Table();
-				table.setUid(rs.getLong("uid"));
-				table.setName(tableName);
-				table.setId(rs.getLong("id"));
-				table.setDesp(rs.getString("desc"));
-				table.setCompression(rs.getString("compression"));
-				table.setEnable(rs.getShort("enable"));
-				table.setMaxversion(rs.getInt("maxversion"));
-				table.setTid(tenantid);
-				table.setMobEnabled(rs.getShort("mob_enabled"));
-				table.setMobThreshold(rs.getLong("mob_threshold"));
-				
-				table.setKeytype(rs.getInt("keytype"));
-				table.setHashkeyType(rs.getInt("hashkey_type"));
-				table.setRangekeyType(rs.getInt("rangekey_type"));
-				table.setCreateTime(rs.getTimestamp("create_time"));
-				table.setModifyTime(rs.getTimestamp("modify_time"));
-				table.setModifyUid(rs.getLong("modify_uid"));
+				table = resultsetToTable(rs);
 			}
-			st.close();	
+			st.close();
 		} catch (SQLException e) {
 			throw new ConfigException(OtsErrorCode.EC_RDS_FAILED_QUERY_TABLE, "Failed to query table " + tableName + "!\n" + e.getMessage());
 		}
-		
+
 		return table;
 	}
-	
+
+	/**
+	 * 将查询的结果存入table对象中
+	 * @param rs
+	 * @return
+	 */
+	private OTSUserTable resultsetToTable(ResultSet rs) throws SQLException {
+		OTSUserTable table = new OTSUserTable();
+		table.setUserId(rs.getLong(TableConstants.USER_ID));
+		table.setTableId(rs.getLong(TableConstants.TABLE_ID));
+		table.setTenantId(rs.getLong(TableConstants.TENANT_ID));
+
+		table.setTableName(rs.getString(TableConstants.TABLE_NAME));
+		table.setTableDesc(rs.getString(TableConstants.TABLE_DESC));
+
+		table.setPrimaryKey(rs.getString(TableConstants.PRIMARY_KEY));
+		table.setTableColumns(rs.getString(TableConstants.TABLE_COLUMNS));
+
+		table.setCreateTime(rs.getTimestamp(TableConstants.CREATE_TIME));
+		table.setModifyTime(rs.getTimestamp(TableConstants.MODIFY_TIME));
+		table.setCreator(rs.getLong(TableConstants.CREATOR));
+		table.setModifier(rs.getLong(TableConstants.MODIFIER));
+
+        return table;
+	}
+
 	public List<Table> queryAllTable(long userid, long tenantid, List<Long> noGetPermissionList) throws ConfigException {
 		List<Table> lstTables = new ArrayList<Table>();
 		

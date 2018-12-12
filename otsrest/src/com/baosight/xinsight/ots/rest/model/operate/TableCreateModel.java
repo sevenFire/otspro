@@ -29,7 +29,7 @@ public class TableCreateModel implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
 	@JsonProperty(value="primary_key_type")
-	private Integer keyType;	
+	private Integer keyType;
 		
 	@JsonProperty(value="hash_key_type")
 	private Integer hashKeyType;

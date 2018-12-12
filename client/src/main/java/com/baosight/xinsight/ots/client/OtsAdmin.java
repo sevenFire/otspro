@@ -9,6 +9,7 @@ import java.util.Map;
 
 import com.baosight.xinsight.config.ConfigConstants;
 import com.baosight.xinsight.config.ConfigReader;
+import com.baosight.xinsight.ots.client.pojo.OTSUserTable;
 import com.baosight.xinsight.ots.client.table.*;
 import com.baosight.xinsight.utils.BytesUtil;
 import org.apache.hadoop.conf.Configuration;
@@ -130,63 +131,45 @@ public class OtsAdmin {
         OtsIndex.Release();
     }
 
-    public OtsTable createTable(long userid, long tenantid, String tablename, Integer keyType, Integer hashkeyType,
-                                Integer rangekeyType, String description, String compressType, Boolean bReplication) throws Exception {
-        return createTable(userid, tenantid, tablename, keyType, hashkeyType, rangekeyType, description,
-                compressType, 1, false, 0, bReplication);
-    }
+    /**
+     * 创建表
+     * 1.首先在pg中创建表
+     * 2.判断该用户所在的租户在hbase中是否已经有对应的大表。
+     * @param userId
+     * @param tenantId
+     * @param tableName
+     * @Param table
+     * @return
+     */
+    public OtsTable createTable(Long userId,
+                                Long tenantId,
+                                String tableName,
+                                OTSUserTable table) {
 
-    public OtsTable createTable(long userid, long tenantid, String tablename, Integer keytype, Integer hashkeyType,
-                                Integer rangekeyType, String description, String compressType,
-                                Integer maxVersion, Boolean mobEnable, Integer mobTheshold, Boolean bReplication) throws OtsException, ConfigException {
-
-        Configurator configurator = new Configurator();
         boolean hbaseFailed2DelPost = false;
 
         try {
-            if (null != configurator.queryTable(tenantid, tablename)) {
-                throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_EXIST, String.format("tenant (id:%d) already owned table:%s!", tenantid, tablename));
-            }
+            //在pg中创建表。
+            //RD: relationship database
+            createRDTable(userId,tenantId,tableName,table);
+            createHbaseTable(tenantId,table.getTableId());
 
-            Table table = new Table();
-            table.setUid(userid);
-            table.setTid(tenantid);
-            table.setName(tablename);
-            table.setCompression(compressType != null ? compressType : Algorithm.NONE.getName());
-            table.setDesp(description);
-            table.setEnable(1);
-            table.setMobEnabled((mobEnable != null && mobEnable.booleanValue()) ? 1 : 0);
-            table.setMobThreshold(mobTheshold != null ? mobTheshold : 100);//!!kb
-            table.setMaxversion(maxVersion != null ? maxVersion : 1);
-            table.setKeytype(keytype);
-            table.setHashkeyType(hashkeyType);
-            if (null != rangekeyType) {
-                table.setRangekeyType(rangekeyType);
-            } else {
-                table.setRangekeyType(-1);
-            }
-            table.setCreateTime(new Date());
-            table.setModifyTime(table.getCreateTime());
-            table.setModifyUid(userid);
-            long id = configurator.addTable(table);
-            table.setId(id);
+//            //after rdb success, add hbase info; if hbase operate error, clean rdb info
+//            try {
+//                if(!isHbaseTableExist(tenantid)){
+//                    createHbaseTable(tenantid,  compressType, maxVersion, mobEnable, mobTheshold, bReplication);
+//                }
+//
+//            } catch (OtsException ex) {
+//                hbaseFailed2DelPost = true;
+//                throw ex;
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
 
-            //after rdb success, add hbase info; if hbase operate error, clean rdb info
-            try {
-                //todo 加代码，验证是否存在大表
-                if(!isHbaseTableExist(tenantid)){
-                    createHbaseTable(tenantid,  compressType, maxVersion, mobEnable, mobTheshold, bReplication);
-                }
+//            return new OtsTable(table, tenantId, this.conf);
 
-            } catch (OtsException ex) {
-                hbaseFailed2DelPost = true;
-                throw ex;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            return new OtsTable(table, tenantid, this.conf);
-
+            return null;
         } catch (ConfigException e) {
             e.printStackTrace();
             throw e;
@@ -205,7 +188,126 @@ public class OtsAdmin {
         }
     }
 
-//    //待删除
+    /**
+     * 在hbase中创建表，一个租户共用一张表
+     * @param tenantId
+     * @param tableId
+     */
+    private void createHbaseTable(Long tenantId, Long tableId) {
+        if(!isHbaseTableExist(tenantId)){
+
+        }
+
+    }
+
+    /**
+     * 在pg中创建表
+     * @param userId
+     * @param tenantId
+     * @param tableName
+     * @param table
+     */
+    private void createRDTable(Long userId, Long tenantId, String tableName, OTSUserTable table){
+        Configurator configurator = new Configurator();
+
+        //查询表是否存在
+        try {
+            if (null != configurator.ifExistTable(userId, tableName)) {
+                throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_EXIST,
+                        String.format("user (userId:%d) already owned table:%s!", userId, tableName));
+            }
+        } catch (OtsException e) {
+            e.printStackTrace();
+        }
+
+        table.setUserId(userId);
+        table.setTenantId(tenantId);
+        table.setTableName(tableName);
+        table.setCreator(userId);
+        table.setModifier(userId);
+        table.setCreateTime(new Date());
+        table.setModifyTime(table.getCreateTime());
+
+
+        long tableId = configurator.addTable(table);
+        table.setTableId(tableId);
+    }
+
+
+//    public OtsTable createTable(long userid, long tenantid, String tablename, Integer keyType, Integer hashkeyType,
+//                                Integer rangekeyType, String description, String compressType, Boolean bReplication) throws Exception {
+//        return createTable(userid, tenantid, tablename, keyType, hashkeyType, rangekeyType, description,
+//                compressType, 1, false, 0, bReplication);
+//    }
+//
+//    public OtsTable createTable(long userid, long tenantid, String tablename, Integer keytype, Integer hashkeyType,
+//                                Integer rangekeyType, String description, String compressType,
+//                                Integer maxVersion, Boolean mobEnable, Integer mobTheshold, Boolean bReplication) throws OtsException, ConfigException {
+//
+//        Configurator configurator = new Configurator();
+//        boolean hbaseFailed2DelPost = false;
+//
+//        try {
+//            if (null != configurator.queryTable(tenantid, tablename)) {
+//                throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_EXIST, String.format("tenant (id:%d) already owned table:%s!", tenantid, tablename));
+//            }
+//
+//            Table table = new Table();
+//            table.setUid(userid);
+//            table.setTid(tenantid);
+//            table.setName(tablename);
+//            table.setCompression(compressType != null ? compressType : Algorithm.NONE.getName());
+//            table.setDesp(description);
+//            table.setEnable(1);
+//            table.setMobEnabled((mobEnable != null && mobEnable.booleanValue()) ? 1 : 0);
+//            table.setMobThreshold(mobTheshold != null ? mobTheshold : 100);//!!kb
+//            table.setMaxversion(maxVersion != null ? maxVersion : 1);
+//            table.setKeytype(keytype);
+//            table.setHashkeyType(hashkeyType);
+//            if (null != rangekeyType) {
+//                table.setRangekeyType(rangekeyType);
+//            } else {
+//                table.setRangekeyType(-1);
+//            }
+//            table.setCreateTime(new Date());
+//            table.setModifyTime(table.getCreateTime());
+//            table.setModifyUid(userid);
+//            long id = configurator.addTable(table);
+//            table.setId(id);
+//
+//            //after rdb success, add hbase info; if hbase operate error, clean rdb info
+//            try {
+//                if(!isHbaseTableExist(tenantid)){
+//                    createHbaseTable(tenantid,  compressType, maxVersion, mobEnable, mobTheshold, bReplication);
+//                }
+//
+//            } catch (OtsException ex) {
+//                hbaseFailed2DelPost = true;
+//                throw ex;
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//
+//            return new OtsTable(table, tenantid, this.conf);
+//
+//        } catch (ConfigException e) {
+//            e.printStackTrace();
+//            throw e;
+//        } catch (OtsException e) {
+//            throw e;
+//        } finally {
+//            try {
+//                if (hbaseFailed2DelPost) {
+//                    configurator.delTable(tenantid, tablename);
+//                }
+//            } catch (ConfigException e) {
+//                e.printStackTrace();
+//            }
+//
+//            configurator.release();
+//        }
+//    }
+
 //    public void createHbaseTable(long tenantid,  String tablename, String compressType, Integer maxVersion,
 //                                 Boolean mobEnable, Integer mobTheshold, Boolean bReplication) throws OtsException {
 //        Admin admin = null;
@@ -297,14 +399,24 @@ public class OtsAdmin {
         }
     }
 
-    public boolean isTableExist(long userid, long tenantid, String tablename) throws Exception {
+    /**
+     * 判断表是否存在。
+     * 因为大小表存在的关系，所有有三种场景：
+     * 1.hbase中该租户下的大表还不存在。
+     * 2.hbase中该租户下的大表已经存在，但是pg中的小表还不存在。
+     * 3.hbase中该租户下的大表已经存在，pg中的小表也已经存在。
+     * 这里判定pg中的小表是否存在。
+     * @param userid
+     * @param tablename
+     * @return
+     * @throws Exception
+     */
+    public boolean isTableExist(long userid,String tablename) throws Exception {
         Configurator configurator = new Configurator();
 
         try {
-            if (null != configurator.queryTable(tenantid, tablename)) {
-                return true;
-            }
-            return false;
+            //pg中(userid,tableName)是唯一键，即同一个用户不能创建同名表。
+            return configurator.ifExistTable(userid, tablename);
 
         } catch (ConfigException e) {
             e.printStackTrace();
@@ -314,7 +426,6 @@ public class OtsAdmin {
         }
     }
 
-//    //todo 待删除
 //	public boolean isHbaseTableExist(long userid, long tenantid, String tablename) throws Exception {
 //
 //		Admin admin = null;
@@ -538,11 +649,19 @@ public class OtsAdmin {
         }
     }
 
+    /**
+     *
+     * @param userid
+     * @param tenantid
+     * @param tablename
+     * @return
+     * @throws ConfigException
+     */
     public OtsTable getTable(long userid, long tenantid, String tablename) throws ConfigException {
         Configurator configurator = new Configurator();
 
         try {
-            Table table = configurator.queryTable(tenantid, tablename);
+            OTSUserTable table = configurator.queryTable(tenantid, tablename);
             if (table != null) {
                 return new OtsTable(table, tenantid, this.conf);
             }
@@ -984,4 +1103,7 @@ public class OtsAdmin {
     }
         otsadmin.finalize();
      }
+
+
+
 }

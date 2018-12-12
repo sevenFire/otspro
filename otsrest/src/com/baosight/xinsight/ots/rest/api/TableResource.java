@@ -7,8 +7,9 @@ import com.baosight.xinsight.ots.exception.OtsException;
 import com.baosight.xinsight.ots.rest.common.RestConstants;
 import com.baosight.xinsight.ots.rest.model.TableConfigModel;
 import com.baosight.xinsight.ots.rest.model.operate.ErrorMode;
-import com.baosight.xinsight.ots.rest.model.operate.TableCreateModel;
 import com.baosight.xinsight.ots.rest.model.operate.TableUpdateModel;
+
+import com.baosight.xinsight.ots.rest.body.table.TableCreateBodyModel;
 import com.baosight.xinsight.ots.rest.service.TableService;
 import com.baosight.xinsight.ots.rest.util.PermissionUtil;
 import com.baosight.xinsight.ots.rest.util.RegexUtil;
@@ -115,24 +116,30 @@ public class TableResource {
     @Consumes({MediaType.TEXT_PLAIN, MediaType.APPLICATION_JSON})
     @Produces(MediaType.APPLICATION_JSON)
     public Response post(@PathParam("tablename") String tablename, String body) {
-        //todo 对表名进行校验
-
-        if (tablename.equals(RestConstants.Query_all_tables)) {
-            LOG.error(Response.Status.FORBIDDEN.name() + ":" + tablename + " is not a valid table object.");
-            return Response.status(Response.Status.FORBIDDEN).type(MediaType.APPLICATION_JSON).entity(
-                    new ErrorMode(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, Response.Status.FORBIDDEN.name() + ":" + tablename + " is not a valid table object.")).build();
-        }
+        //校验过表名后，肯定不会是tablename.equals(RestConstants.Query_all_tables)，这段冗余。
+//        if (tablename.equals(RestConstants.Query_all_tables)) {
+//            LOG.error(Response.Status.FORBIDDEN.name() + ":" + tablename + " is not a valid table object.");
+//            return Response.status(Response.Status.FORBIDDEN).type(MediaType.APPLICATION_JSON).entity(
+//                    new ErrorMode(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, Response.Status.FORBIDDEN.name() + ":" + tablename + " is not a valid table object.")).build();
+//        }
 
         try {
+            //校验表名合法性
             if (!RegexUtil.isValidTableName(tablename)) {
                 LOG.error(Response.Status.FORBIDDEN.name() + ": tablename '" + tablename + "' contains illegal char.");
                 throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, Response.Status.FORBIDDEN.name() + ": tablename '" + tablename + "' contains illegal char.");
             }
+
+            //获得userInfo和body
             PermissionCheckUserInfo userInfo = new PermissionCheckUserInfo();
             userInfo = PermissionUtil.getUserInfoModel(userInfo, request);
             LOG.debug("Post:" + tablename + "\nContent:\n" + body);
-            TableCreateModel model = TableCreateModel.toClass(body);
-            TableService.createTable(userInfo, tablename, model);
+
+            //生成body对应的model并校验参数合法性
+            TableCreateBodyModel bodyModel = TableCreateBodyModel.toClass(body);
+
+            //创建表
+            TableService.createTable(userInfo, tablename, bodyModel);
         } catch (OtsException e) {
             e.printStackTrace();
             LOG.error(ExceptionUtils.getFullStackTrace(e));

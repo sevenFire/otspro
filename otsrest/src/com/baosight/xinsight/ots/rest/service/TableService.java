@@ -11,6 +11,7 @@ import com.baosight.xinsight.ots.client.exception.ConfigException;
 import com.baosight.xinsight.ots.client.exception.IndexException;
 import com.baosight.xinsight.ots.client.exception.TableException;
 import com.baosight.xinsight.ots.exception.OtsException;
+import com.baosight.xinsight.ots.rest.body.table.TableCreateBodyModel;
 import com.baosight.xinsight.ots.rest.common.RestConstants;
 import com.baosight.xinsight.ots.rest.model.TableInfoListModel;
 import com.baosight.xinsight.ots.rest.model.TableInfoModel;
@@ -263,9 +264,9 @@ public class TableService {
      * @throws ZooKeeperConnectionException
      * @throws MasterNotRunningException
      */
-    public static boolean exist(UserInfo userInfo, String tablename) throws OtsException {
+    public static boolean exist(UserInfo userInfo, String tableName) throws OtsException {
         try {
-            return ConfigUtil.getInstance().getOtsAdmin().isTableExist(userInfo.getUserId(), userInfo.getTenantId(), tablename);
+            return ConfigUtil.getInstance().getOtsAdmin().isTableExist(userInfo.getUserId(), tableName);
         } catch (MasterNotRunningException e) {
             throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_NO_RUNNING_HBASE_MASTER, "Failed to check table exist or not because hbase master no running!\n" + e.getMessage());
         } catch (ZooKeeperConnectionException e) {
@@ -398,8 +399,9 @@ public class TableService {
      * @return created table
      * @throws Exception
      */
-    public static OtsTable createTable(PermissionCheckUserInfo userInfo, String tableName, TableCreateModel model) throws Exception {
+    public static OtsTable createTable(PermissionCheckUserInfo userInfo, String tableName, TableCreateBodyModel createBodyModel) throws Exception {
         try {
+            //存入userInfo到缓存
             if (userInfo.getTenantId() != null && userInfo.getUserId() != null) {
                 PermissionUtil.CacheInfo info = PermissionUtil.GetInstance().otsPermissionHandler(userInfo, -1, PermissionUtil.PermissionOpesration.OTSMANAGEW);
                 MessageHandlerFactory.getMessageProducer(CommonConstants.OTS_CONFIG_TOPIC)
@@ -407,20 +409,15 @@ public class TableService {
                                 info.isReadPermission(), info.isWritePermission(), info.isPermissionFlag(), info.getCurrentTime()));
             }
 
+            //判定pg中小表是否已经存在
             if (TableService.exist(userInfo, tableName)) {
                 LOG.error(Response.Status.CONFLICT.name() + ":" + tableName + " has exist.");
                 throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_EXIST, Response.Status.CONFLICT.name() + ":" + tableName + " has exist.");
             }
-            OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userInfo.getUserId(), userInfo.getTenantId(), tableName);
-            if (null != table) {
-                throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_EXIST, String.format("user (id:%d) already owned table:%s!", userInfo.getUserId(), tableName));
-            }
-            if (!model.isValid()) {
-                throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_CREATE, "invalid table scheme!");
-            }
-            table = ConfigUtil.getInstance().getOtsAdmin().createTable(userInfo.getUserId(), userInfo.getTenantId(), tableName, model.getKeyType(), model.getHashKeyType(), model.getRangeKeyType(), model.getDescription(),
-                    model.hasCompressionType() ? convertCompression(model.getCompressionType()) : Algorithm.NONE.getName(), model.getMaxVersions(), model.getMobEnabled(),
-                    model.getMobThreshold(), model.hasReplication());
+
+            //创建表
+            OtsTable table = ConfigUtil.getInstance().getOtsAdmin().createTable(userInfo.getUserId(), userInfo.getTenantId(), tableName,
+                    createBodyModel.toTable());
 
             //add cache
             TableInfoModel info = new TableInfoModel(table.getName());

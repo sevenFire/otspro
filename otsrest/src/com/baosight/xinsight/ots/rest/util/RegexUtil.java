@@ -9,8 +9,10 @@ public class RegexUtil {
 	private final static String tablename_regex = "((?!_{2,})[A-Za-z](([A-Z0-9a-z])*(_)?([A-Z0-9a-z])+)*)";
 	
 	private final static String basic_regex = "[A-Za-z0-9_]+";
-	
-	public static boolean isValidTableName(String tablename) {		
+
+	//todo lyh 这里的校验规则暂时没验证。延用旧的。
+	//只能包含拉丁字母或数字或下划线“_”，且只能以字母开头，且不能以下划线“_”开头和结尾，且不能包含连续下划线“_”。长度不能超过128个字符，不能为空。
+	public static boolean isValidTableName(String tablename) {
 		Pattern pattern = Pattern.compile(basic_regex);
 		Matcher m = pattern.matcher(tablename);
 		boolean match = m.matches();
