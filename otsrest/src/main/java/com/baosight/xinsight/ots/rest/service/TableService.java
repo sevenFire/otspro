@@ -6,12 +6,13 @@ import com.baosight.xinsight.model.PermissionCheckUserInfo;
 import com.baosight.xinsight.model.UserInfo;
 import com.baosight.xinsight.ots.OtsConstants;
 import com.baosight.xinsight.ots.OtsErrorCode;
-import com.baosight.xinsight.ots.client.OtsTable;
+import com.baosight.xinsight.ots.client.OTSTable;
 import com.baosight.xinsight.ots.client.exception.ConfigException;
 import com.baosight.xinsight.ots.client.exception.IndexException;
 import com.baosight.xinsight.ots.client.exception.TableException;
 import com.baosight.xinsight.ots.exception.OtsException;
-import com.baosight.xinsight.ots.rest.body.table.TableCreateBodyModel;
+import com.baosight.xinsight.ots.rest.vo.table.message.TableInfoVo;
+import com.baosight.xinsight.ots.rest.vo.table.operate.TableCreateBodyVo;
 import com.baosight.xinsight.ots.rest.common.RestConstants;
 import com.baosight.xinsight.ots.rest.model.TableInfoListModel;
 import com.baosight.xinsight.ots.rest.model.TableInfoModel;
@@ -31,7 +32,6 @@ import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
 import org.apache.log4j.Logger;
 
-import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -87,18 +87,18 @@ public class TableService {
         try {
             List<Long> noGetPermissionList = null;
             if (userInfo.getTenantId() != null && userInfo.getUserId() != null) {
-                List<OtsTable> permittedTables = ConfigUtil.getInstance().getOtsAdmin().getPermisstionTables(userInfo.getUserId(), userInfo.getTenantId());
+                List<OTSTable> permittedTables = ConfigUtil.getInstance().getOtsAdmin().getPermisstionTables(userInfo.getUserId(), userInfo.getTenantId());
                 List<Long> byPermittedObjects = new ArrayList<Long>();
-                for (OtsTable table : permittedTables) {
+                for (OTSTable table : permittedTables) {
                     byPermittedObjects.add(table.getId());
                 }
                 noGetPermissionList = AasPermissionUtil.obtainNoGetPermissionInstanceList(ConfigUtil.getInstance().getAuthServerAddr(), userInfo, byPermittedObjects);
             }
 
-            List<OtsTable> lstTables = ConfigUtil.getInstance().getOtsAdmin().getAllTables(userInfo.getUserId(), userInfo.getTenantId(), noGetPermissionList);
+            List<OTSTable> lstTables = ConfigUtil.getInstance().getOtsAdmin().getAllTables(userInfo.getUserId(), userInfo.getTenantId(), noGetPermissionList);
             tableList.setTotalcount((long) lstTables.size());
             tableList.setErrcode(0L);
-            for (OtsTable table : lstTables) {
+            for (OTSTable table : lstTables) {
                 String tablename = table.getName();
                 tableList.add(tablename);
             }
@@ -119,15 +119,15 @@ public class TableService {
         try {
             List<Long> noGetPermissionList = null;
             if (userInfo.getTenantId() != null && userInfo.getUserId() != null) {
-                List<OtsTable> permittedTables = ConfigUtil.getInstance().getOtsAdmin().getPermisstionTables(userInfo.getUserId(), userInfo.getTenantId());
+                List<OTSTable> permittedTables = ConfigUtil.getInstance().getOtsAdmin().getPermisstionTables(userInfo.getUserId(), userInfo.getTenantId());
                 List<Long> byPermittedObjects = new ArrayList<Long>();
-                for (OtsTable table : permittedTables) {
+                for (OTSTable table : permittedTables) {
                     byPermittedObjects.add(table.getId());
                 }
                 noGetPermissionList = AasPermissionUtil.obtainNoGetPermissionInstanceList(ConfigUtil.getInstance().getAuthServerAddr(), userInfo, byPermittedObjects);
             }
-            List<OtsTable> lstTables = ConfigUtil.getInstance().getOtsAdmin().getAllTables(userInfo.getUserId(), userInfo.getTenantId(), name, limit, offset, noGetPermissionList);
-            for (OtsTable table : lstTables) {
+            List<OTSTable> lstTables = ConfigUtil.getInstance().getOtsAdmin().getAllTables(userInfo.getUserId(), userInfo.getTenantId(), name, limit, offset, noGetPermissionList);
+            for (OTSTable table : lstTables) {
                 String tablename = table.getName();
                 tableList.add(tablename);
             }
@@ -148,19 +148,22 @@ public class TableService {
      *
      * @throws Exception
      */
-    public static TableInfoModel getTableInfo(PermissionCheckUserInfo userInfo, String tableName) throws ConfigException, OtsException, IOException, Exception {
-        TableInfoModel model = new TableInfoModel(tableName);
+    public static TableInfoVo getTableInfo(PermissionCheckUserInfo userInfo, String tableName) throws ConfigException, OtsException, IOException, Exception {
+        TableInfoVo tableInfoVo = new TableInfoVo(tableName);
 
         try {
-            OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+            OTSTable table = ConfigUtil.getInstance().getOtsAdmin().getOTSTable(userInfo.getUserId(),userInfo.getTenantId(),tableName);
             if (table == null) {
-                throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, String.format("user (id:%d) was not owned table:%s!", userInfo.getUserId(), tableName));
+                throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST,
+                        String.format("user (id:%d) was not owned table:%s!", userInfo.getUserId(), tableName));
             }
-            long tableId = table.getId();
+            long tableId = table.getTableId();
+
+            //todo lyh cache?
             if (userInfo.getTenantId() != null && userInfo.getUserId() != null) {
                 PermissionUtil.CacheInfo cacheInfo = PermissionUtil.GetInstance().otsPermissionHandler(userInfo, tableId, PermissionUtil.PermissionOpesration.READ);
                 MessageHandlerFactory.getMessageProducer(CommonConstants.OTS_CONFIG_TOPIC).sendData(userInfo.getTenantId(),
-                        MessageBuilder.buildPermissionMessage(userInfo, table.getId(), cacheInfo.isReadPermission(), cacheInfo.isWritePermission(), cacheInfo.isPermissionFlag(), cacheInfo.getCurrentTime()));
+                        MessageBuilder.buildPermissionMessage(userInfo, table.getTableId(), cacheInfo.isReadPermission(), cacheInfo.isWritePermission(), cacheInfo.isPermissionFlag(), cacheInfo.getCurrentTime()));
             }
 
             model.setDescription(table.getDescription());
@@ -204,16 +207,16 @@ public class TableService {
      * @throws ZooKeeperConnectionException
      * @throws MasterNotRunningException
      */
-    public static TableInfoListModel getAllTablesInfo(PermissionCheckUserInfo userInfo) throws ConfigException, IOException {
+    public static TableInfoListModel getAllTables(PermissionCheckUserInfo userInfo) throws ConfigException, IOException {
         TableInfoListModel listModel = new TableInfoListModel();
         try {
             List<Long> noGetPermissionList = null;
             if (userInfo.getTenantId() != null && userInfo.getUserId() != null) {
                 // 过滤出id list
-                List<OtsTable> permittedTables = ConfigUtil.getInstance().getOtsAdmin().getPermisstionTables(userInfo.getUserId(), userInfo.getTenantId());
+                List<OTSTable> permittedTables = ConfigUtil.getInstance().getOtsAdmin().getPermissionTables(userInfo.getUserId(), userInfo.getTenantId());
                 List<Long> byPermittedObjects = new ArrayList<Long>();
-                for (OtsTable table : permittedTables) {
-                    byPermittedObjects.add(table.getId());
+                for (OTSTable table : permittedTables) {
+                    byPermittedObjects.add(table.getTableId());
                 }
                 // 再调用AasPermissionUtil接口获取ConfigUtil.getInstance().getAuthServerAddr()，noGetPermissionList
                 try {
@@ -223,9 +226,9 @@ public class TableService {
                     LOG.error(ExceptionUtils.getFullStackTrace(e));
                 }
             }
-            List<OtsTable> lstTables = ConfigUtil.getInstance().getOtsAdmin().getAllTables(userInfo.getUserId(), userInfo.getTenantId(), noGetPermissionList);
-            for (OtsTable table : lstTables) {
-                TableInfoModel model = new TableInfoModel(table.getName());
+            List<OTSTable> lstTables = ConfigUtil.getInstance().getOtsAdmin().getAllTables(userInfo.getUserId(), userInfo.getTenantId(), noGetPermissionList);
+            for (OTSTable table : lstTables) {
+                TableInfoModel model = new TableInfoModel(table.getTableName());
                 model.setDescription(table.getDescription());
                 model.setMaxVersions(table.getMaxversion());
                 model.setCompressionType(convertCompression(table.getCompression()));
@@ -256,6 +259,69 @@ public class TableService {
         LOG.debug("RETURN:" + listModel.toString());
         return listModel;
     }
+
+//    /**
+//     * get all tables information
+//     *
+//     * @param userInfo
+//     * @return List<TableInfoModel>
+//     * @throws SQLException
+//     * @throws IOException
+//     * @throws ZooKeeperConnectionException
+//     * @throws MasterNotRunningException
+//     */
+//    public static TableInfoListModel getAllTables(PermissionCheckUserInfo userInfo) throws ConfigException, IOException {
+//        TableInfoListModel listModel = new TableInfoListModel();
+//        try {
+//            List<Long> noGetPermissionList = null;
+//            if (userInfo.getTenantId() != null && userInfo.getUserId() != null) {
+//                // 过滤出id list
+//                List<OtsTable> permittedTables = ConfigUtil.getInstance().getOtsAdmin().getPermissionTables(userInfo.getUserId(), userInfo.getTenantId());
+//                List<Long> byPermittedObjects = new ArrayList<Long>();
+//                for (OtsTable table : permittedTables) {
+//                    byPermittedObjects.add(table.getTableId());
+//                }
+//                // 再调用AasPermissionUtil接口获取ConfigUtil.getInstance().getAuthServerAddr()，noGetPermissionList
+//                try {
+//                    noGetPermissionList = AasPermissionUtil.obtainNoGetPermissionInstanceList(ConfigUtil.getInstance().getAuthServerAddr(), userInfo, byPermittedObjects);
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                    LOG.error(ExceptionUtils.getFullStackTrace(e));
+//                }
+//            }
+//            List<OtsTable> lstTables = ConfigUtil.getInstance().getOtsAdmin().getAllTables(userInfo.getUserId(), userInfo.getTenantId(), noGetPermissionList);
+//            for (OtsTable table : lstTables) {
+//                TableInfoModel model = new TableInfoModel(table.getTableName());
+//                model.setDescription(table.getDescription());
+//                model.setMaxVersions(table.getMaxversion());
+//                model.setCompressionType(convertCompression(table.getCompression()));
+//                model.setEnable(table.getEnable());
+//                model.setMobEnabled(table.getMobEnabled());
+//                model.setMobThreshold(table.getMobThreshold());
+//
+//                SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//                model.setCreateTime(sDateFormat.format(table.getCreateTime()));
+//                model.setLastModify(sDateFormat.format(table.getModifyTime()));
+//                model.setKeyType(table.getKeyType());
+//                model.setHashKeyType(table.getHashKeyType());
+//                model.setRangeKeyType(table.getRangeKeyType());
+//                model.setId(table.getId());
+//
+//                listModel.add(model);
+//                // update cache
+//                TableConfigUtil.addTableConfig(userInfo.getUserId(), userInfo.getTenantId(), model);
+//            }
+//        } catch (ConfigException e) {
+//            throw e;
+//        } catch (IOException e) {
+//            throw e;
+//        }
+//        listModel.setErrcode(0L);
+//        listModel.setCount(listModel.getTableinfolist().size());
+//
+//        LOG.debug("RETURN:" + listModel.toString());
+//        return listModel;
+//    }
 
     /**
      * check table exist or not
@@ -338,7 +404,7 @@ public class TableService {
         LOG.debug("deleteTable begin: uid=" + userInfo.getUserId() + ", namespace=" + userInfo.getTenantId() + ", tablename=" + tableName);
         ErrorMode rMod = new ErrorMode(0L);
         try {
-            OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+            OTSTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userInfo.getUserId(), userInfo.getTenantId(), tableName);
             if (userInfo.getTenantId() != null && userInfo.getUserId() != null) {
                 PermissionUtil.GetInstance().otsPermissionHandler(userInfo, -1, PermissionUtil.PermissionOpesration.OTSMANAGEW);
                 // remove relevant permission cache of current table
@@ -399,7 +465,7 @@ public class TableService {
      * @return created table
      * @throws Exception
      */
-    public static OtsTable createTable(PermissionCheckUserInfo userInfo, String tableName, TableCreateBodyModel createBodyModel) throws Exception {
+    public static OTSTable createTable(PermissionCheckUserInfo userInfo, String tableName, TableCreateBodyVo createBodyModel) throws Exception {
         try {
             //存入userInfo到缓存
             if (userInfo.getTenantId() != null && userInfo.getUserId() != null) {
@@ -409,26 +475,21 @@ public class TableService {
                                 info.isReadPermission(), info.isWritePermission(), info.isPermissionFlag(), info.getCurrentTime()));
             }
 
-//            //判定pg中小表是否已经存在
-              //在create方法中已经校验了。
-//            if (TableService.exist(userInfo, tableName)) {
-//                LOG.error(Response.Status.CONFLICT.name() + ":" + tableName + " has exist.");
-//                throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_EXIST, Response.Status.CONFLICT.name() + ":" + tableName + " has exist.");
-//            }
-
             //创建表（包含大表和小表），以及表存在性校验
-            OtsTable table = ConfigUtil.getInstance().getOtsAdmin().createTable(userInfo.getUserId(), userInfo.getTenantId(), tableName,
+            OTSTable table = ConfigUtil.getInstance().getOtsAdmin().createTable(userInfo.getUserId(), userInfo.getTenantId(), tableName,
                     createBodyModel.toTable());
 
             //add cache
-            TableInfoModel info = new TableInfoModel(table.getName());
-            info.setKeyType(table.getKeyType());
-            info.setHashKeyType(table.getHashKeyType());
-            info.setRangeKeyType(table.getRangeKeyType());
-            TableConfigUtil.addTableConfig(userInfo.getUserId(), userInfo.getTenantId(), info);
+            //todo lyh 存入cache的格式是什么？
+//            TableInfoModel info = new TableInfoModel(table.getTableName());
+//            info.setKeyType(table.getKeyType());
+//            info.setHashKeyType(table.getHashKeyType());
+//            info.setRangeKeyType(table.getRangeKeyType());
+//            TableConfigUtil.addTableConfig(userInfo.getUserId(), userInfo.getTenantId(), info);
 
             //Kafka produces config message
-            MessageHandlerFactory.getMessageProducer(CommonConstants.OTS_CONFIG_TOPIC).sendData(userInfo.getTenantId(), MessageBuilder.buildConfigMessage(0, userInfo.getTenantId(), userInfo.getUserId(), tableName));
+            MessageHandlerFactory.getMessageProducer(CommonConstants.OTS_CONFIG_TOPIC)
+                    .sendData(userInfo.getTenantId(), MessageBuilder.buildConfigMessage(0, userInfo.getTenantId(), userInfo.getUserId(), tableName));
 
             return table;
         } catch (TableException e) {
@@ -454,7 +515,7 @@ public class TableService {
             if (userInfo.getTenantId() != null && userInfo.getUserId() != null) {
                 PermissionUtil.GetInstance().otsPermissionHandler(userInfo, info.getId(), PermissionUtil.PermissionOpesration.READ);
             }
-            OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+            OTSTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userInfo.getUserId(), userInfo.getTenantId(), tableName);
             if (table == null) {
                 throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, "table not exist!");
             }

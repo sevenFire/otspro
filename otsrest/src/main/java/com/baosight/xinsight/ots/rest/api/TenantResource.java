@@ -4,7 +4,7 @@ import com.baosight.xinsight.auth.AuthManager;
 import com.baosight.xinsight.common.CommonConstants;
 import com.baosight.xinsight.config.ConfigConstants;
 import com.baosight.xinsight.ots.OtsConstants;
-import com.baosight.xinsight.ots.client.OtsTable;
+import com.baosight.xinsight.ots.client.OTSTable;
 import com.baosight.xinsight.ots.common.index.Column;
 import com.baosight.xinsight.ots.common.index.IndexInfo;
 import com.baosight.xinsight.ots.exception.OtsException;
@@ -106,7 +106,7 @@ public class TenantResource {
                 solr_index_model.setColumns(columns);
                 LOG.debug("init PDS Alarm Table solr index:" + tablename_PDS_alarm);
                 
-                OtsTable pds_alarm_table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(0, namespace_PDS, tablename_PDS_alarm);
+                OTSTable pds_alarm_table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(0, namespace_PDS, tablename_PDS_alarm);
                 pds_alarm_table.innerCreateSolrIndex(solr_index_model);                              
             }             
         } catch (OtsException e) {

@@ -1,4 +1,4 @@
-package com.baosight.xinsight.ots.rest.body.table;
+package com.baosight.xinsight.ots.rest.vo.table.operate;
 
 import com.baosight.xinsight.ots.OtsConstants;
 import com.baosight.xinsight.ots.OtsErrorCode;
@@ -28,7 +28,7 @@ import javax.xml.bind.annotation.XmlTransient;
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class TableCreateBodyModel implements Serializable{
+public class TableCreateBodyVo implements Serializable{
     @JsonIgnore
     private static final long serialVersionUID = 1L;
 
@@ -37,15 +37,15 @@ public class TableCreateBodyModel implements Serializable{
 
     //table_columns是一个数组，且每个元素又有多个属性
     @JsonProperty(value="table_columns")
-    private List<TableColumnsBodyModel> tableColumns = new ArrayList<TableColumnsBodyModel>();
+    private List<TableColumnsBodyVo> tableColumns = new ArrayList<TableColumnsBodyVo>();
 
     @JsonProperty(value="table_desc")
     private String tableDesc;
 
-    public TableCreateBodyModel() {
+    public TableCreateBodyVo() {
     }
 
-    public TableCreateBodyModel(List<TableColumnsBodyModel> tableColumns, String tableDesc) {
+    public TableCreateBodyVo(List<TableColumnsBodyVo> tableColumns, String tableDesc) {
         this.tableColumns = tableColumns;
         this.tableDesc = tableDesc;
     }
@@ -65,10 +65,10 @@ public class TableCreateBodyModel implements Serializable{
      */
     @JsonIgnore
     @XmlTransient
-    public static TableCreateBodyModel toClass(String in) throws OtsException {
+    public static TableCreateBodyVo toClass(String in) throws OtsException {
         try {
             ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(in.getBytes(OtsConstants.DEFAULT_ENCODING));
-            return JsonUtil.readJsonFromStream(byteArrayInputStream, TableCreateBodyModel.class);
+            return JsonUtil.readJsonFromStream(byteArrayInputStream, TableCreateBodyVo.class);
         } catch (Exception e) {
             e.printStackTrace();
             throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_JSON2OBJECT, "convert json input to TableCreateModel failed.");
@@ -97,11 +97,11 @@ public class TableCreateBodyModel implements Serializable{
 //    }
 
     @XmlElement
-    public List<TableColumnsBodyModel> getTableColumns() {
+    public List<TableColumnsBodyVo> getTableColumns() {
         return tableColumns;
     }
 
-    public void setTableColumns(List<TableColumnsBodyModel> tableColumns) {
+    public void setTableColumns(List<TableColumnsBodyVo> tableColumns) {
         this.tableColumns = tableColumns;
     }
 

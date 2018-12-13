@@ -4,7 +4,7 @@ import com.baosight.xinsight.common.CommonConstants;
 import com.baosight.xinsight.model.PermissionCheckUserInfo;
 import com.baosight.xinsight.ots.OtsConstants;
 import com.baosight.xinsight.ots.OtsErrorCode;
-import com.baosight.xinsight.ots.client.OtsTable;
+import com.baosight.xinsight.ots.client.OTSTable;
 import com.baosight.xinsight.ots.client.exception.ConfigException;
 import com.baosight.xinsight.ots.exception.OtsException;
 import com.baosight.xinsight.ots.rest.model.TableInfoListModel;
@@ -31,7 +31,7 @@ public class TableConfigUtil {
 			userInfo.setTenantId(tenantid);
 			userInfo.setTenantName(tenant);
 			userInfo.setServiceName(OtsConstants.OTS_SERVICE_NAME);
-			TableInfoListModel infolist = TableService.getAllTablesInfo(userInfo);
+			TableInfoListModel infolist = TableService.getAllTables(userInfo);
 			Map<String, TableInfoModel> tbConfigMap = new HashMap<String, TableInfoModel>();
 			for (TableInfoModel t : infolist.getTableinfolist()) {
 				tbConfigMap.put(t.getName(), t);
@@ -43,12 +43,12 @@ public class TableConfigUtil {
 		}		
 	}
 	
-	public static void cacheTableConfig(long userid, long tenantid,	List<OtsTable> lstTables) throws IOException, ConfigException  {
+	public static void cacheTableConfig(long userid, long tenantid,	List<OTSTable> lstTables) throws IOException, ConfigException  {
 		try {
 			String key = String.valueOf(tenantid) + CommonConstants.DEFAULT_DOMAIN_SPLIT + String.valueOf(userid);
 				
 			Map<String, TableInfoModel> tbConfigMap = new HashMap<String, TableInfoModel>();
-			for (OtsTable table : lstTables) {
+			for (OTSTable table : lstTables) {
 				
 				TableInfoModel model = new TableInfoModel(table.getName());
 				model.setId(table.getId());
@@ -95,7 +95,7 @@ public class TableConfigUtil {
 		}			
 		
 		try {
-			OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userid, tenantid, tablename);
+			OTSTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userid, tenantid, tablename);
 			if (table == null) {
 				throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, String.format("user (id:%d) was not owned table:%s!", userid, tablename));
 			}			
@@ -116,7 +116,7 @@ public class TableConfigUtil {
 
 	public static synchronized void syncAdd(long tenantid, long userid, String tablename) throws ConfigException, Exception {
 		try {
-			OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userid, tenantid, tablename);
+			OTSTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userid, tenantid, tablename);
 			if (table == null) {
 				//throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, String.format("user (id:%d) was not owned table:%s!", userid, tablename));
 				return;

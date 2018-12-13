@@ -5,7 +5,7 @@ import com.baosight.xinsight.model.PermissionCheckUserInfo;
 import com.baosight.xinsight.ots.OtsConstants;
 import com.baosight.xinsight.ots.OtsErrorCode;
 import com.baosight.xinsight.ots.client.OtsIndex;
-import com.baosight.xinsight.ots.client.OtsTable;
+import com.baosight.xinsight.ots.client.OTSTable;
 import com.baosight.xinsight.ots.exception.OtsException;
 import com.baosight.xinsight.ots.rest.common.RestConstants;
 import com.baosight.xinsight.ots.rest.model.IndexConfigModel;
@@ -93,7 +93,7 @@ public class IndexResource {
                         limit = String.valueOf(RestConstants.DEFAULT_QUERY_MAX_LIMIT);
                     }
 
-                    OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userInfo.getUserId(), userInfo.getTenantId(), tablename);
+                    OTSTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userInfo.getUserId(), userInfo.getTenantId(), tablename);
                     if (null == table) {
                         LOG.error("Table " + tablename + "no exist!");
                         throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, "Table " + tablename + " no exist!");

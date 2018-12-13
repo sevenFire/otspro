@@ -4,7 +4,7 @@ import com.baosight.xinsight.model.PermissionCheckUserInfo;
 import com.baosight.xinsight.ots.OtsConstants;
 import com.baosight.xinsight.ots.OtsErrorCode;
 import com.baosight.xinsight.ots.client.OtsIndex;
-import com.baosight.xinsight.ots.client.OtsTable;
+import com.baosight.xinsight.ots.client.OTSTable;
 import com.baosight.xinsight.ots.client.exception.ConfigException;
 import com.baosight.xinsight.ots.client.exception.TableException;
 import com.baosight.xinsight.ots.client.table.RecordQueryOption;
@@ -79,7 +79,7 @@ public class RecordService {
             RecordQueryOption query = new RecordQueryOption(model.getColumnsAsList(), model.getLimit(), model.getOffset(), model.getCursor_mark(), model.getDescending(), null,
                     getHbaseAttributes(model.getQuery_from()));
 
-            OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+            OTSTable table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
             RecordQueryResultModel resultModel = new RecordQueryResultModel(tableName);
             if (model.whichRange(info.getKeyType()) == RestConstants.RANGE_OPERATE) {
                 Filter rowFilter = genRowkeyHashFilter(model.getHashkey(), info.getHashKeyType());
@@ -213,7 +213,7 @@ public class RecordService {
      */
     public static byte[] getRecordFile(PermissionCheckUserInfo userInfo, String tableName, String hashkey, String rangekey, String column) throws Exception {
         try {
-            OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+            OTSTable table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
             if (userInfo.getTenantId() != null && userInfo.getUserId() != null) {
                 PermissionUtil.GetInstance().otsPermissionHandler(userInfo, table.getId(), PermissionUtil.PermissionOpesration.READ);
             }
@@ -252,7 +252,7 @@ public class RecordService {
         ErrorMode rMode = new ErrorMode(errorcode);
         try {
             TableInfoModel info = TableConfigUtil.getTableConfig(userInfo.getUserId(), userInfo.getTenantId(), tableName);
-            OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+            OTSTable table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
             if (userInfo.getTenantId() != null && userInfo.getUserId() != null) {
                 PermissionUtil.GetInstance().otsPermissionHandler(userInfo, info.getId(), PermissionUtil.PermissionOpesration.EDIT);
             }
@@ -304,7 +304,7 @@ public class RecordService {
                 throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_RECORD_DELETE, "Failed to delete record, it is not a valid delete.");
             }
 
-            OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+            OTSTable table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
             RecordQueryOption query = new RecordQueryOption(model.getColumnsAsList(), model.getLimit(), model.getOffset(), model.getCursor_mark(), model.getDescending(), null,
                     getHbaseAttributes(model.getQuery_from()));
 
@@ -518,7 +518,7 @@ public class RecordService {
                 return rMode;
             }
 
-            OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+            OTSTable table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
             table.insertRecords(records);
 
         } catch (TableException e) {
@@ -621,7 +621,7 @@ public class RecordService {
                 return rMode;
             }
 
-            OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+            OTSTable table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
             table.updateRecords(records);
         } catch (MasterNotRunningException e) {
             e.printStackTrace();
@@ -668,7 +668,7 @@ public class RecordService {
         ErrorMode rmodel = new ErrorMode(0L);
 
         try {
-            OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+            OTSTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userInfo.getUserId(), userInfo.getTenantId(), tableName);
             if (userInfo.getTenantId() != null && userInfo.getUserId() != null) {
                 PermissionUtil.GetInstance().otsPermissionHandler(userInfo, table.getId(), PermissionUtil.PermissionOpesration.EDIT);
             }

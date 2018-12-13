@@ -1,4 +1,4 @@
-package com.baosight.xinsight.ots.rest.body.table;
+package com.baosight.xinsight.ots.rest.vo.table.operate;
 
 import com.baosight.xinsight.utils.JsonUtil;
 
@@ -10,7 +10,6 @@ import java.io.Serializable;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
@@ -22,7 +21,7 @@ import javax.xml.bind.annotation.XmlTransient;
  */
 @XmlRootElement(name="tableColumns")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class TableColumnsBodyModel implements Serializable{
+public class TableColumnsBodyVo implements Serializable{
 
     @JsonIgnore
     private static final long serialVersionUID = 1L;
@@ -35,10 +34,10 @@ public class TableColumnsBodyModel implements Serializable{
     @JsonSerialize(include=JsonSerialize.Inclusion.NON_NULL)
     private String colType;
 
-    public TableColumnsBodyModel() {
+    public TableColumnsBodyVo() {
     }
 
-    public TableColumnsBodyModel(String colName, String colType) {
+    public TableColumnsBodyVo(String colName, String colType) {
         this.colName = colName;
         this.colType = colType;
     }

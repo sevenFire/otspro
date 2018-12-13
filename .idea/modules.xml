@@ -4,6 +4,8 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/otscfgsvr/otscfgsvr.iml" filepath="$PROJECT_DIR$/otscfgsvr/otscfgsvr.iml" />
       <module fileurl="file://$PROJECT_DIR$/otsrest/otsrest.iml" filepath="$PROJECT_DIR$/otsrest/otsrest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/otsrest3/otsrest (1).iml" filepath="$PROJECT_DIR$/otsrest3/otsrest (1).iml" />
+      <module fileurl="file://$PROJECT_DIR$/otsrest3/otsrest3.iml" filepath="$PROJECT_DIR$/otsrest3/otsrest3.iml" />
       <module fileurl="file://$PROJECT_DIR$/client/xinsight-ots-client.iml" filepath="$PROJECT_DIR$/client/xinsight-ots-client.iml" group="xinsight-otspro and modules" />
       <module fileurl="file://$PROJECT_DIR$/common/xinsight-ots-common.iml" filepath="$PROJECT_DIR$/common/xinsight-ots-common.iml" group="xinsight-otspro and modules" />
       <module fileurl="file://$PROJECT_DIR$/coprocessor/xinsight-ots-coprocessor.iml" filepath="$PROJECT_DIR$/coprocessor/xinsight-ots-coprocessor.iml" group="xinsight-otspro and modules" />

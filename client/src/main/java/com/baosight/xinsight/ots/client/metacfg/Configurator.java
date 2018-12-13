@@ -139,21 +139,49 @@ public class Configurator {
 
 		return id;
 	}
-	
-	public void delTable(long tenantid, String name) throws ConfigException {
+
+	/**
+	 * 根据userId和表名删除表。
+	 * 注意：同一个用户下不能有同名表，所以(userId,tableName)是唯一键。
+	 * @param userId
+	 * @param tableName
+	 * @throws ConfigException
+	 */
+	public void delTable(long userId, String tableName) throws ConfigException {
 		
 		try {
 			connect();
 			
 			Statement st = conn.createStatement();
-			String sql = String.format("delete from ots_user_table where ots_user_table.name = '%s' and ots_user_table.tid = '%d';", name, tenantid);
-			//System.out.println(sql);
+			String sql = String.format("delete from ots_user_table where ots_user_table.user_id = '%d' and ots_user_table.table_name = '%s';", userId, tableName);
 			LOG.debug(sql);
 			
 			st.execute(sql);
 			st.close();	
 		} catch (SQLException e) {
-			throw new ConfigException(OtsErrorCode.EC_RDS_FAILED_DEL_TABLE, "Failed to delete table " + name + "!\n" + e.getMessage());
+			throw new ConfigException(OtsErrorCode.EC_RDS_FAILED_DEL_TABLE, "Failed to delete table " + tableName + "!\n" + e.getMessage());
+		}
+
+	}
+
+	/**
+	 * 根据表id删除表
+	 * @param tableId
+	 * @throws ConfigException
+	 */
+	public void delTable(long tableId) throws ConfigException {
+
+		try {
+			connect();
+
+			Statement st = conn.createStatement();
+			String sql = String.format("delete from ots_user_table where ots_user_table.table_id = '%d';", tableId);
+			LOG.debug(sql);
+
+			st.execute(sql);
+			st.close();
+		} catch (SQLException e) {
+			throw new ConfigException(OtsErrorCode.EC_RDS_FAILED_DEL_TABLE, "Failed to delete table " + tableId + "!\n" + e.getMessage());
 		}
 
 	}
@@ -223,19 +251,19 @@ public class Configurator {
 
 	/**
 	 * 查询并返回表的详细信息
-	 * @param userid
+	 * @param userId
 	 * @param tableName
 	 * @return
 	 * @throws ConfigException
 	 */
-	public Table queryTable(long userid, String tableName) throws ConfigException{
+	public Table queryTable(long userId, String tableName) throws ConfigException{
 		Table table = null;
 
 		try {
 			connect();
 
 			Statement st = conn.createStatement();
-			String sql = String.format("select * from ots_user_table where ots_user_table.table_name = '%s' and ots_user_table.userid = '%d';", tableName, userid);
+			String sql = String.format("select * from ots_user_table where ots_user_table.table_name = '%s' and ots_user_table.userid = '%d';", tableName, userId);
 			LOG.debug(sql);
 
 			ResultSet rs = st.executeQuery(sql);

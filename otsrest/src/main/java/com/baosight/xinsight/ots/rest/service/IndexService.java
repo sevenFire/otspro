@@ -6,7 +6,7 @@ import com.baosight.xinsight.ots.OtsConstants;
 import com.baosight.xinsight.ots.OtsErrorCode;
 import com.baosight.xinsight.ots.client.OtsIndex;
 import com.baosight.xinsight.ots.client.OtsSecondaryIndex;
-import com.baosight.xinsight.ots.client.OtsTable;
+import com.baosight.xinsight.ots.client.OTSTable;
 import com.baosight.xinsight.ots.client.exception.IndexException;
 import com.baosight.xinsight.ots.client.exception.PermissionSqlException;
 import com.baosight.xinsight.ots.client.secondaryindex.SecondIndexQueryOption;
@@ -85,7 +85,7 @@ public class IndexService {
     public static ErrorMode deleteIndex(PermissionCheckUserInfo userInfo, String tableName, String indexName) throws OtsException, IOException, InterruptedException {
         LOG.info("Delete index " + tableName + "." + indexName);
         ErrorMode rMode = new ErrorMode(0L);
-        OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+        OTSTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userInfo.getUserId(), userInfo.getTenantId(), tableName);
         try {
             if (userInfo.getTenantId() != null && userInfo.getUserId() != null) {
                 PermissionUtil.GetInstance().checkEditPermission(userInfo, table.getId());
@@ -112,12 +112,12 @@ public class IndexService {
     public static ErrorMode updateIndex(PermissionCheckUserInfo userInfo, String tableName, String indexName, IndexUpdateModel model) throws OtsException {
         long errorcode = 0;
         ErrorMode rMode = new ErrorMode(errorcode);
-        OtsTable tableInfo = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+        OTSTable tableInfo = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
         try {
             if (userInfo.getTenantId() != null && userInfo.getUserId() != null) {
                 PermissionUtil.GetInstance().checkEditPermission(userInfo, tableInfo.getId());
             }
-            OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+            OTSTable table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
             OtsIndex index = table.getIndex(indexName);
             if (null == index) {
                 throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_INDEX_NO_EXIST, String.format("user (id:%d) was not owned index:%s of table:%s!", userInfo.getUserId(), indexName, tableName));
@@ -204,7 +204,7 @@ public class IndexService {
         IndexListModel model = new IndexListModel();
         List<String> indexNames = new ArrayList<String>();
         try {
-            OtsTable tableInfo = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+            OTSTable tableInfo = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
             if (userInfo.getTenantId() != null && userInfo.getUserId() != null) {
                 PermissionUtil.GetInstance().checkReadPermission(userInfo, tableInfo.getId());
             }
@@ -244,7 +244,7 @@ public class IndexService {
         long errorcode = 0;
         ErrorMode rMode = new ErrorMode(errorcode);
         try {
-            OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+            OTSTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userInfo.getUserId(), userInfo.getTenantId(), tableName);
             if (userInfo.getTenantId() != null && userInfo.getUserId() != null) {
                 PermissionUtil.GetInstance().checkEditPermission(userInfo, table.getId());
             }
@@ -322,7 +322,7 @@ public class IndexService {
     public static IndexInfoModel getIndexInfo(PermissionCheckUserInfo userInfo, String tableName, String indexName, String queryfrom) throws PermissionSqlException, OtsException {
         IndexInfoModel model = new IndexInfoModel();
         try {
-            OtsTable tableInfo = ConfigUtil.getInstance().getOtsAdmin().getTable(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+            OTSTable tableInfo = ConfigUtil.getInstance().getOtsAdmin().getTable(userInfo.getUserId(), userInfo.getTenantId(), tableName);
             if (userInfo.getTenantId() != null && userInfo.getUserId() != null) {
                 PermissionUtil.GetInstance().checkReadPermission(userInfo, tableInfo.getId());
             }
@@ -421,7 +421,7 @@ public class IndexService {
             query.setOffset(model.getOffset());
         }
 
-        OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+        OTSTable table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
         OtsSecondaryIndex index = table.getSecondaryIndex(indexName);
         if (null == index) {
             throw new IOException("Index not exist!");
@@ -483,7 +483,7 @@ public class IndexService {
         IndexQueryResultModel results = new IndexQueryResultModel(tableName);
 
         try {
-            OtsTable tableInfo = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+            OTSTable tableInfo = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
             TableInfoModel info = TableConfigUtil.getTableConfig(userInfo.getUserId(), userInfo.getTenantId(), tableName);
             if (userInfo.getTenantId() != null && userInfo.getUserId() != null) {
                 PermissionUtil.GetInstance().checkReadPermission(userInfo, info.getId());
@@ -567,7 +567,7 @@ public class IndexService {
                 PermissionUtil.GetInstance().checkReadPermission(userInfo, info.getId());
             }
 
-            OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userInfo.getUserId(), userInfo.getTenantId(), tableName);
+            OTSTable table = ConfigUtil.getInstance().getOtsAdmin().getTable(userInfo.getUserId(), userInfo.getTenantId(), tableName);
             if (table == null) {
                 LOG.error("Table " + tableName + "no exist!");
                 throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, "Table " + tableName + " no exist!");

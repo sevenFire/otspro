@@ -65,7 +65,7 @@ public class OtsAdminTest {
             long tenantid = 101;
             String tablename = "test_wls1";
             if (!otsAdmin.isTableExist(userid, tenantid, tablename)){
-                OtsTable otstable = otsAdmin.createTable(userid, tenantid, tablename, 2, 1, 2, tablename, "snappy", 1, true, 0, true);
+                OTSTable otstable = otsAdmin.createTable(userid, tenantid, tablename, 2, 1, 2, tablename, "snappy", 1, true, 0, true);
                 boolean isTableExist_after = otsAdmin.isTableExist(otstable.getUserid(), otstable.getTenantid(), otstable.getName());
                 System.out.println("Create the table："+ otstable.getName());
                 Assert.assertTrue("Create a table!",isTableExist_after);
@@ -127,14 +127,14 @@ public class OtsAdminTest {
             String tablename_Exist = "test_wls";
 
             //  若小表不存在，无法插入记录
-            OtsTable otstable_notExist = otsAdmin.getTable(userid, tenantid, tablename_notExist);
+            OTSTable otstable_notExist = otsAdmin.getTable(userid, tenantid, tablename_notExist);
             if(otstable_notExist == null) {
                 System.out.println("The table doesn't exist!");
             }
             Assert.assertNull("The table doesn't exist!",otstable_notExist);
 
             //  若小表存在，往里插入记录
-            OtsTable otstable = otsAdmin.getTable(userid, tenantid, tablename_Exist);
+            OTSTable otstable = otsAdmin.getTable(userid, tenantid, tablename_Exist);
             if(otstable != null){
 
                 RowRecord rec1 = new RowRecord();
@@ -163,7 +163,7 @@ public class OtsAdminTest {
     @Test
     public void getRecordsTest(){
         try {
-            OtsTable otstable = otsAdmin.getTable(12345, 101, "test_wls");
+            OTSTable otstable = otsAdmin.getTable(12345, 101, "test_wls");
 //            插入记录
 //            RowRecord rec1 = new RowRecord();
 //            rec1.setRowkey("10000".getBytes());
@@ -200,7 +200,7 @@ public class OtsAdminTest {
     @Test
     public void getRecords_RangeKeys_Test(){
         try {
-            OtsTable otstable = otsAdmin.getTable(12345, 101, "test_wls");
+            OTSTable otstable = otsAdmin.getTable(12345, 101, "test_wls");
             //插入记录
             RowRecord rec1 = new RowRecord();
             rec1.setRowkey("10000".getBytes());
@@ -249,7 +249,7 @@ public class OtsAdminTest {
     @Test
     public void getRecords_ListKeys_Test(){
         try {
-            OtsTable otstable = otsAdmin.getTable(12345, 101, "test_wls");
+            OTSTable otstable = otsAdmin.getTable(12345, 101, "test_wls");
             RowRecord rec3 = new RowRecord();
             rec3.setRowkey("30000".getBytes());
             RowCell cell3 = new RowCell("col3".getBytes(), "test3".getBytes());
@@ -303,7 +303,7 @@ public class OtsAdminTest {
     @Test
     public void updateRecordTest(){
         try {
-            OtsTable otstable = otsAdmin.getTable(12345, 101, "test_wls");
+            OTSTable otstable = otsAdmin.getTable(12345, 101, "test_wls");
             RowRecord rec1 = new RowRecord();
             rec1.setRowkey("10000".getBytes());
             RowCell cell1 = new RowCell("col1".getBytes(), "test1".getBytes());
@@ -330,7 +330,7 @@ public class OtsAdminTest {
     @Test
     public void deleteAllRecordAllTest(){
         try {
-            OtsTable otstable = otsAdmin.getTable(12345, 101, "test_wls");
+            OTSTable otstable = otsAdmin.getTable(12345, 101, "test_wls");
             //插入记录
             RowRecord rec1 = new RowRecord();
             rec1.setRowkey("10000".getBytes());
@@ -370,7 +370,7 @@ public class OtsAdminTest {
     @Test
     public void deleteRecord_RangeKeys_Test(){
         try {
-            OtsTable otstable = otsAdmin.getTable(12345, 101, "test_wls");
+            OTSTable otstable = otsAdmin.getTable(12345, 101, "test_wls");
             //插入记录
             RowRecord rec1 = new RowRecord();
             rec1.setRowkey("10000".getBytes());
@@ -416,7 +416,7 @@ public class OtsAdminTest {
     @Test
     public void deleteRecord_ListKeys_Test(){
         try {
-            OtsTable otstable = otsAdmin.getTable(12345, 101, "test_wls");
+            OTSTable otstable = otsAdmin.getTable(12345, 101, "test_wls");
             //插入记录
             RowRecord rec3 = new RowRecord();
             rec3.setRowkey("30000".getBytes());

@@ -8,6 +8,7 @@ import java.util.Map;
 
 import com.baosight.xinsight.config.ConfigConstants;
 import com.baosight.xinsight.config.ConfigReader;
+import com.baosight.xinsight.ots.client.metacfg.Table;
 import com.baosight.xinsight.ots.client.table.*;
 import com.baosight.xinsight.utils.BytesUtil;
 import org.apache.hadoop.conf.Configuration;
@@ -32,7 +33,6 @@ import com.baosight.xinsight.ots.client.exception.PermissionSqlException;
 import com.baosight.xinsight.ots.client.exception.TableException;
 import com.baosight.xinsight.ots.client.index.IndexConfigurator;
 import com.baosight.xinsight.ots.client.metacfg.Configurator;
-import com.baosight.xinsight.ots.client.metacfg.Table;
 import com.baosight.xinsight.ots.client.metacfg.Index;
 import com.baosight.xinsight.ots.client.metacfg.IndexProfile;
 import com.baosight.xinsight.ots.client.metacfg.TableProfile;
@@ -135,7 +135,7 @@ public class OtsAdmin {
      * @Param table
      * @return
      */
-    public OtsTable createTable(Long userId,
+    public OTSTable createTable(Long userId,
                                 Long tenantId,
                                 String tableName,
                                 Table table) throws OtsException {
@@ -150,25 +150,31 @@ public class OtsAdmin {
 
             //HBase创建失败，需要回滚RDB中数据
             if (hBaseFailed2DelPost){
-                delRDBTable(table.getTableId());
+                delRDBTable(userId,tableName);
             }
 
-            return new OtsTable(table, tenantId, this.conf);
+            return new OTSTable(table, tenantId, this.conf);
 
         }  catch (OtsException e) {
             throw e;
         }
     }
 
-    private void delRDBTable(Long tableId) throws OtsException {
+    /**
+     * 删除表
+     * @param userId
+     * @param tableName
+     * @throws OtsException
+     */
+    private void delRDBTable(Long userId, String tableName) throws OtsException {
         Configurator configurator = new Configurator();
 
         try {
-           configurator.delTable(tableId);
+           configurator.delTable(userId,tableName);
         } catch (ConfigException e) {//删除失败
             e.printStackTrace();
             throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_CREATE,
-                    String.format("Delete table:%s failed!", tableId));
+                    String.format("user:%s delete table:%s failed!", userId, tableName));
         }finally {
             configurator.release();
         }
@@ -437,15 +443,22 @@ public class OtsAdmin {
         }
     }
 
-    public List<OtsTable> getPermisstionTables(long userid, long tenantid) throws ConfigException {
+    /**
+     *
+     * @param userId
+     * @param tenantId
+     * @return
+     * @throws ConfigException
+     */
+    public List<OTSTable> getPermissionTables(long userId, long tenantId) throws ConfigException {
 
-        List<OtsTable> lstTable = new ArrayList<OtsTable>();
+        List<OTSTable> lstTable = new ArrayList<>();
 
         Configurator configurator = new Configurator();
         try {
-            List<Table> lstTables = configurator.queryPermisstionTables(userid, tenantid);
+            List<Table> lstTables = configurator.queryPermisstionTables(userId, tenantId);
             for (Table table : lstTables) {
-                lstTable.add(new OtsTable(table, tenantid, this.conf));
+                lstTable.add(new OTSTable(table, tenantId, this.conf));
             }
         } catch (ConfigException e) {
             e.printStackTrace();
@@ -457,15 +470,15 @@ public class OtsAdmin {
         return lstTable;
     }
 
-    public List<OtsTable> getAllTables(long userid, long tenantid, List<Long> noGetPermissionList) throws ConfigException {
+    public List<OTSTable> getAllTables(long userid, long tenantid, List<Long> noGetPermissionList) throws ConfigException {
 
-        List<OtsTable> lstTable = new ArrayList<OtsTable>();
+        List<OTSTable> lstTable = new ArrayList<OTSTable>();
 
         Configurator configurator = new Configurator();
         try {
             List<Table> lstTables = configurator.queryAllTable(userid, tenantid, noGetPermissionList);
             for (Table table : lstTables) {
-                lstTable.add(new OtsTable(table, tenantid, this.conf));
+                lstTable.add(new OTSTable(table, tenantid, this.conf));
             }
         } catch (ConfigException e) {
             e.printStackTrace();
@@ -477,15 +490,15 @@ public class OtsAdmin {
         return lstTable;
     }
 
-    public List<OtsTable> getAllTables(long userid, long tenantid, String name, Long limit, Long offset, List<Long> noGetPermissionList) throws ConfigException {
+    public List<OTSTable> getAllTables(long userid, long tenantid, String name, Long limit, Long offset, List<Long> noGetPermissionList) throws ConfigException {
 
-        List<OtsTable> lstTable = new ArrayList<OtsTable>();
+        List<OTSTable> lstTable = new ArrayList<OTSTable>();
 
         Configurator configurator = new Configurator();
         try {
             List<Table> lstTables = configurator.queryAllTable(userid, tenantid, name, limit, offset, noGetPermissionList);
             for (Table table : lstTables) {
-                lstTable.add(new OtsTable(table, tenantid, this.conf));
+                lstTable.add(new OTSTable(table, tenantid, this.conf));
             }
         } catch (ConfigException e) {
             e.printStackTrace();
@@ -511,15 +524,15 @@ public class OtsAdmin {
         }
     }
 
-    public List<OtsTable> getAllTablesByTid(long tenantid, List<Long> noGetPermissionList) throws ConfigException {
+    public List<OTSTable> getAllTablesByTid(long tenantid, List<Long> noGetPermissionList) throws ConfigException {
 
-        List<OtsTable> lstTable = new ArrayList<OtsTable>();
+        List<OTSTable> lstTable = new ArrayList<OTSTable>();
 
         Configurator configurator = new Configurator();
         try {
             List<Table> lstTables = configurator.queryAllTableByTid(tenantid, noGetPermissionList);
             for (Table table : lstTables) {
-                lstTable.add(new OtsTable(table, tenantid, this.conf));
+                lstTable.add(new OTSTable(table, tenantid, this.conf));
             }
         } catch (ConfigException e) {
             e.printStackTrace();
@@ -543,21 +556,22 @@ public class OtsAdmin {
         }
     }
 
+
     /**
-     *
-     * @param userid
-     * @param tenantid
-     * @param tablename
+     * 获得OTSTable
+     * @param userId
+     * @param tenantId
+     * @param tableName
      * @return
      * @throws ConfigException
      */
-    public OtsTable getTable(long userid, long tenantid, String tablename) throws ConfigException {
+    public OTSTable getOTSTable(long userId, long tenantId, String tableName) throws ConfigException {
         Configurator configurator = new Configurator();
 
         try {
-            Table table = configurator.queryTable(tenantid, tablename);
+            Table table = configurator.queryTable(userId, tableName);
             if (table != null) {
-                return new OtsTable(table, tenantid, this.conf);
+                return new OTSTable(table, tenantId, this.conf);
             }
             return null;
 
@@ -574,8 +588,8 @@ public class OtsAdmin {
      * no safe mode, table's info is null until getXXX() property function called.
      * main using for getRecords()
      */
-    public OtsTable getTableNoSafe(long userid, long tenantid, String tablename) {
-        return new OtsTable(userid, tenantid, tablename, this.conf);
+    public OTSTable getTableNoSafe(long userid, long tenantid, String tablename) {
+        return new OTSTable(userid, tenantid, tablename, this.conf);
     }
 
     public Map<String, TableMetrics> getTableMetrics(long tenantid) throws OtsException, TableException, ConfigException {
@@ -885,7 +899,7 @@ public class OtsAdmin {
 //        OtsTable table = ConfigUtil.getInstance().getOtsAdmin().getTableNoSafe(userInfo.getUserId(), userInfo.getTenantId(), tableName);
 //        table.insertRecords(records);
 
-            OtsTable otstable = otsadmin.getTable(12345, 101, "test_wls1");
+            OTSTable otstable = otsadmin.getOTSTable(12345, 101, "test_wls1");
         ////todo 验证postgres中小表存在与否,判断是否为null
 		if(otstable != null)
 		{

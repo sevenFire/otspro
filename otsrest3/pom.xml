@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.baosight.xinsight</groupId>
-    <artifactId>otsrest</artifactId>
+    <artifactId>otsrest3</artifactId>
     <version>${ots.version}</version>
 
     <parent>

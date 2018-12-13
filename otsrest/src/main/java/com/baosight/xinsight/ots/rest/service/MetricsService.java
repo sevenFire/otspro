@@ -2,7 +2,7 @@ package com.baosight.xinsight.ots.rest.service;
 
 import com.baosight.xinsight.config.ConfigConstants;
 import com.baosight.xinsight.ots.OtsConstants;
-import com.baosight.xinsight.ots.client.OtsTable;
+import com.baosight.xinsight.ots.client.OTSTable;
 import com.baosight.xinsight.ots.client.exception.ConfigException;
 import com.baosight.xinsight.ots.client.exception.TableException;
 import com.baosight.xinsight.ots.common.table.TableMetrics;
@@ -83,8 +83,8 @@ public class MetricsService {
         MetricsListModel modellist = new MetricsListModel();
         try {
             List<Long> noGetPermissionList = null;
-            List<OtsTable> listTables = ConfigUtil.getInstance().getOtsAdmin().getAllTablesByTid(tenantid, noGetPermissionList);
-            for (OtsTable table : listTables) {
+            List<OTSTable> listTables = ConfigUtil.getInstance().getOtsAdmin().getAllTablesByTid(tenantid, noGetPermissionList);
+            for (OTSTable table : listTables) {
                 MetricsModel model = getMetricsInfo(tenantid, table.getName());
                 if (model != null) {
                     modellist.add(model);

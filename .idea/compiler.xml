@@ -7,6 +7,8 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="otsrest" />
+        <module name="otsrest (1)" />
+        <module name="otsrest3" />
         <module name="xinsight-ots-client" />
         <module name="xinsight-ots-common" />
         <module name="xinsight-ots-coprocessor" />
@@ -16,6 +18,9 @@
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="otsrest" target="1.7" />
+      <module name="otsrest (1)" target="1.7" />
+      <module name="otsrest2" target="1.8" />
+      <module name="otsrest3" target="1.7" />
       <module name="xinsight-ots-client" target="1.7" />
       <module name="xinsight-ots-common" target="1.7" />
       <module name="xinsight-ots-coprocessor" target="1.7" />

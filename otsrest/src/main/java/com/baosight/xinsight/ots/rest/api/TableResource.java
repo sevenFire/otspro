@@ -3,19 +3,22 @@ package com.baosight.xinsight.ots.rest.api;
 import com.baosight.xinsight.common.CommonConstants;
 import com.baosight.xinsight.model.PermissionCheckUserInfo;
 import com.baosight.xinsight.ots.OtsErrorCode;
+import com.baosight.xinsight.ots.client.exception.ConfigException;
 import com.baosight.xinsight.ots.exception.OtsException;
 import com.baosight.xinsight.ots.rest.common.RestConstants;
 import com.baosight.xinsight.ots.rest.model.TableConfigModel;
 import com.baosight.xinsight.ots.rest.model.operate.ErrorMode;
 import com.baosight.xinsight.ots.rest.model.operate.TableUpdateModel;
 
-import com.baosight.xinsight.ots.rest.body.table.TableCreateBodyModel;
+import com.baosight.xinsight.ots.rest.vo.table.operate.TableCreateBodyVo;
 import com.baosight.xinsight.ots.rest.service.TableService;
 import com.baosight.xinsight.ots.rest.util.PermissionUtil;
 import com.baosight.xinsight.ots.rest.util.RegexUtil;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.log4j.Logger;
+
+import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
@@ -75,36 +78,48 @@ public class TableResource {
         }
     }
 
+    /**
+     * 获取某个table的详细信息
+     * @param tableName
+     * @return
+     */
     @GET
     @Path("/{tablename}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response get(@PathParam("tablename") String tablename) {
-        try {
-            LOG.debug("Get:" + tablename);
-            PermissionCheckUserInfo userInfo = new PermissionCheckUserInfo();
-            userInfo = PermissionUtil.getUserInfoModel(userInfo, request);
-            if (tablename.equals(RestConstants.Query_all_tables)) {
-                return Response.status(Response.Status.OK).type(MediaType.APPLICATION_JSON).entity(TableService.getTablelist(userInfo)).build();
-            } else {
-                if (!RegexUtil.isValidTableName(tablename)) {
-                    LOG.error(Response.Status.FORBIDDEN.name() + ": tablename '" + tablename + "' contains illegal char.");
-                    throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, Response.Status.FORBIDDEN.name() + ": tablename '" + tablename + "' contains illegal char.");
-                }
+    public Response get(@PathParam("tablename") String tableName) {
+        LOG.debug("Get:" + tableName);
 
-                if (!TableService.exist(userInfo, tablename)) {
-                    LOG.error(Response.Status.NOT_FOUND.name() + ":" + tablename + " is not exist.");
-                    return Response.status(Response.Status.NOT_FOUND).type(MediaType.APPLICATION_JSON).entity(
-                            new ErrorMode(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, Response.Status.NOT_FOUND.name() + ":" + tablename + " is not exist.")).build();
-                } else {
-                    return Response.status(Response.Status.OK).type(MediaType.APPLICATION_JSON).entity(TableService.getTableInfo(userInfo, tablename)).build();
-                }
+        //校验权限
+        PermissionCheckUserInfo userInfo = new PermissionCheckUserInfo();
+        userInfo = PermissionUtil.getUserInfoModel(userInfo, request);
+
+        try{
+            //todo lyh 校验表名
+            if (!RegexUtil.isValidTableName(tableName)) {
+                LOG.error(Response.Status.FORBIDDEN.name() + ": tableName '" + tableName + "' contains illegal char.");
+                throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, Response.Status.FORBIDDEN.name() + ": tableName '" + tableName + "' contains illegal char.");
             }
-        } catch (OtsException e) {
+
+            //获取表信息，不存在返回错误提示：不存在该表
+            return Response.status(Response.Status.OK).type(MediaType.APPLICATION_JSON)
+                        .entity(TableService.getTableInfo(userInfo, tableName)).build();
+        }
+        catch (OtsException e) {
             e.printStackTrace();
-            return Response.status(e.getErrorCode() == OtsErrorCode.EC_OTS_PERMISSION_NO_PERMISSION_FAULT?Response.Status.FORBIDDEN : Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON).entity(new ErrorMode(e.getErrorCode(), e.getMessage())).build();
+            if (e.getErrorCode() == OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST){
+                return Response.status(Response.Status.NOT_FOUND).type(MediaType.APPLICATION_JSON).entity(
+                   new ErrorMode(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, Response.Status.NOT_FOUND.name() + ":" + tableName + " is not exist.")).build();
+            }else if(e.getErrorCode() == OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST){
+                return Response.status(Response.Status.NOT_FOUND).type(MediaType.APPLICATION_JSON)
+                        .entity(new ErrorMode(500L, e.getMessage())).build();
+            }else{
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).type(MediaType.APPLICATION_JSON)
+                        .entity(new ErrorMode(500L, e.getMessage())).build();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).type(MediaType.APPLICATION_JSON).entity(new ErrorMode(500L, e.getMessage())).build();
         }
     }
 
@@ -115,31 +130,24 @@ public class TableResource {
     @Path("/{tablename}")
     @Consumes({MediaType.TEXT_PLAIN, MediaType.APPLICATION_JSON})
     @Produces(MediaType.APPLICATION_JSON)
-    public Response post(@PathParam("tablename") String tablename, String body) {
-        //校验过表名后，肯定不会是tablename.equals(RestConstants.Query_all_tables)，这段冗余。
-//        if (tablename.equals(RestConstants.Query_all_tables)) {
-//            LOG.error(Response.Status.FORBIDDEN.name() + ":" + tablename + " is not a valid table object.");
-//            return Response.status(Response.Status.FORBIDDEN).type(MediaType.APPLICATION_JSON).entity(
-//                    new ErrorMode(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, Response.Status.FORBIDDEN.name() + ":" + tablename + " is not a valid table object.")).build();
-//        }
-
+    public Response post(@PathParam("tablename") String tableName, String body) {
         try {
             //校验表名合法性
-            if (!RegexUtil.isValidTableName(tablename)) {
-                LOG.error(Response.Status.FORBIDDEN.name() + ": tablename '" + tablename + "' contains illegal char.");
-                throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, Response.Status.FORBIDDEN.name() + ": tablename '" + tablename + "' contains illegal char.");
+            if (!RegexUtil.isValidTableName(tableName)) {
+                LOG.error(Response.Status.FORBIDDEN.name() + ": tableName '" + tableName + "' contains illegal char.");
+                throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, Response.Status.FORBIDDEN.name() + ": tableName '" + tableName + "' contains illegal char.");
             }
 
             //获得userInfo和body
             PermissionCheckUserInfo userInfo = new PermissionCheckUserInfo();
             userInfo = PermissionUtil.getUserInfoModel(userInfo, request);
-            LOG.debug("Post:" + tablename + "\nContent:\n" + body);
+            LOG.debug("Post:" + tableName + "\nContent:\n" + body);
 
             //生成body对应的model并校验参数合法性
-            TableCreateBodyModel bodyModel = TableCreateBodyModel.toClass(body);
+            TableCreateBodyVo bodyModel = TableCreateBodyVo.toClass(body);
 
             //创建表
-            TableService.createTable(userInfo, tablename, bodyModel);
+            TableService.createTable(userInfo, tableName, bodyModel);
         } catch (OtsException e) {
             e.printStackTrace();
             LOG.error(ExceptionUtils.getFullStackTrace(e));
@@ -158,11 +166,11 @@ public class TableResource {
     @Path("/{tablename}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("tablename") String tablename) {
-        if (tablename.equals(RestConstants.Query_all_tables)) {
-            LOG.error(Response.Status.FORBIDDEN.name() + ":" + tablename + " is not a valid table object.");
-            return Response.status(Response.Status.FORBIDDEN).type(MediaType.APPLICATION_JSON).entity(
-                    new ErrorMode(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, Response.Status.FORBIDDEN.name() + ":" + tablename + " is not a valid table object.")).build();
-        }
+//        if (tablename.equals(RestConstants.Query_all_tables)) {
+//            LOG.error(Response.Status.FORBIDDEN.name() + ":" + tablename + " is not a valid table object.");
+//            return Response.status(Response.Status.FORBIDDEN).type(MediaType.APPLICATION_JSON).entity(
+//                    new ErrorMode(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, Response.Status.FORBIDDEN.name() + ":" + tablename + " is not a valid table object.")).build();
+//        }
 
         // add your code here
         try {
@@ -196,11 +204,11 @@ public class TableResource {
     @Consumes({MediaType.TEXT_PLAIN, MediaType.APPLICATION_JSON})
     @Produces(MediaType.APPLICATION_JSON)
     public Response put(@PathParam("tablename") String tablename, String body) {
-        if (tablename.equals(RestConstants.Query_all_tables)) {
-            LOG.error(Response.Status.FORBIDDEN.name() + ":" + tablename + " is not a valid table object.");
-            return Response.status(Response.Status.FORBIDDEN).type(MediaType.APPLICATION_JSON).entity(
-                    new ErrorMode(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, Response.Status.FORBIDDEN.name() + ":" + tablename + " is not a valid table object.")).build();
-        }
+//        if (tablename.equals(RestConstants.Query_all_tables)) {
+//            LOG.error(Response.Status.FORBIDDEN.name() + ":" + tablename + " is not a valid table object.");
+//            return Response.status(Response.Status.FORBIDDEN).type(MediaType.APPLICATION_JSON).entity(
+//                    new ErrorMode(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, Response.Status.FORBIDDEN.name() + ":" + tablename + " is not a valid table object.")).build();
+//        }
 
         // add your code here
         try {
@@ -223,7 +231,9 @@ public class TableResource {
 
         } catch (OtsException e) {
             e.printStackTrace();
-            return Response.status(e.getErrorCode() == OtsErrorCode.EC_OTS_PERMISSION_NO_PERMISSION_FAULT?Response.Status.FORBIDDEN : Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON).entity(new ErrorMode(e.getErrorCode(), e.getMessage())).build();
+            return Response.status(e.getErrorCode() == OtsErrorCode.EC_OTS_PERMISSION_NO_PERMISSION_FAULT?
+                    Response.Status.FORBIDDEN
+                    : Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON).entity(new ErrorMode(e.getErrorCode(), e.getMessage())).build();
         } catch (Exception e) {
             e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).type(MediaType.APPLICATION_JSON).entity(new ErrorMode(500L, e.getMessage())).build();
@@ -233,20 +243,25 @@ public class TableResource {
 
     ///////////////获取所有表及其信息//////////////////////////////////////////
     @GET
-    @Path("/_all_tables_info")
+    @Path("/_all_tables")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAllTablesInfo() {
+    public Response getAllTables() {
         try {
             LOG.debug("Get: all tables information!");
             PermissionCheckUserInfo userInfo = new PermissionCheckUserInfo();
             userInfo = PermissionUtil.getUserInfoModel(userInfo, request);
-            return Response.status(Response.Status.OK).type(MediaType.APPLICATION_JSON).entity(TableService.getAllTablesInfo(userInfo)).build();
+            return Response.status(Response.Status.OK).type(MediaType.APPLICATION_JSON).
+                    entity(TableService.getAllTables(userInfo)).build();
         } catch (OtsException e) {
             e.printStackTrace();
-            return Response.status(e.getErrorCode() == OtsErrorCode.EC_OTS_PERMISSION_NO_PERMISSION_FAULT?Response.Status.FORBIDDEN : Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON).entity(new ErrorMode(e.getErrorCode(), e.getMessage())).build();
+            return Response.status(e.getErrorCode() == OtsErrorCode.EC_OTS_PERMISSION_NO_PERMISSION_FAULT ?
+                    Response.Status.FORBIDDEN :
+                    Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON)
+                    .entity(new ErrorMode(e.getErrorCode(), e.getMessage())).build();
         } catch (Exception e) {
             e.printStackTrace();
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).type(MediaType.APPLICATION_JSON).entity(new ErrorMode(500L, e.getMessage())).build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .type(MediaType.APPLICATION_JSON).entity(new ErrorMode(500L, e.getMessage())).build();
         }
     }
 
