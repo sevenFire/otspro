@@ -2,121 +2,122 @@ package com.baosight.xinsight.ots.client.metacfg;
 
 import java.util.Date;
 
+/**
+ * @author liyuhui
+ * @date 2018/12/11
+ * @description table对应的实体类
+ */
 public class Table {
-	private long id;
-	private long uid;
-	private String name;
-	private String compression;
-	private String desp;
-	private int enable;
-	private long maxversion;
-	private long tid;
-	private long mobThreshold;
-	private int mobEnabled;
-	
-	private int keytype;
-	private int hashkeyType;
-	private int rangekeyType;
-	private Date createTime;
-	private Date modifyTime;
-	private long modifyUid;
-	
-	public int getKeytype() {
-		return keytype;
-	}
-	public void setKeytype(int keytype) {
-		this.keytype = keytype;
-	}
-	public int getHashkeyType() {
-		return hashkeyType;
-	}
-	public void setHashkeyType(int hashkeyType) {
-		this.hashkeyType = hashkeyType;
-	}
-	public int getRangekeyType() {
-		return rangekeyType;
-	}
-	public void setRangekeyType(int rangekeyType) {
-		this.rangekeyType = rangekeyType;
-	}
-	public Date getCreateTime() {
-		return createTime;
-	}
-	public void setCreateTime(Date createTime) {
-		this.createTime = createTime;
-	}
-	public Date getModifyTime() {
-		return modifyTime;
-	}
-	public void setModifyTime(Date modifyTime) {
-		this.modifyTime = modifyTime;
-	}
-	public long getModifyUid() {
-		return modifyUid;
-	}
-	public void setModifyUid(long modifyUid) {
-		this.modifyUid = modifyUid;
-	}
-	
-	public long getMobThreshold() {
-		return mobThreshold;
-	}
-	public void setMobThreshold(long mobThreshold) {
-		this.mobThreshold = mobThreshold;
-	}
-	public int getMobEnabled() {
-		return mobEnabled;
-	}
-	public void setMobEnabled(int mobEnabled) {
-		this.mobEnabled = mobEnabled;
-	}
-	
-	public long getUid() {
-		return uid;
-	}
-	public void setUid(long uid) {
-		this.uid = uid;
-	}
-	public String getName() {
-		return name;
-	}
-	public void setName(String name) {
-		this.name = name;
-	}
-	public String getCompression() {
-		return compression;
-	}
-	public void setCompression(String compression) {
-		this.compression = compression;
-	}
-	public String getDesp() {
-		return desp;
-	}
-	public void setDesp(String desp) {
-		this.desp = desp;
-	}
-	public long getId() {
-		return id;
-	}
-	public void setId(long id) {
-		this.id = id;
-	}
-	public int getEnable() {
-		return enable;
-	}
-	public void setEnable(int enable) {
-		this.enable = enable;
-	}	
-	public long getMaxversion() {
-		return maxversion;
-	}
-	public void setMaxversion(long maxversion) {
-		this.maxversion = maxversion;
-	}
-	public long getTid() {
-		return tid;
-	}
-	public void setTid(long tid) {
-		this.tid = tid;
-	}
+
+    private Long tableId ; //表id
+    private Long userId ; //用户id
+    private Long tenantId; //租户id
+    private String tableName; //表名
+    private String tableDesc; //表的描述
+    private String primaryKey; //表的主键
+    private String tableColumns; //表的列信息
+    private Date createTime; //创建时间
+    private Date modifyTime; //最近修改时间
+    private Long creator; //创建人
+    private Long modifier; //最近修改人
+
+    //todo lyh
+//    private Boolean permission; //权限信息
+//    private Boolean enable; //是否启用
+
+    public Long getTableId() {
+        return tableId;
+    }
+
+    public void setTableId(Long tableId) {
+        this.tableId = tableId;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public Long getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(Long tenantId) {
+        this.tenantId = tenantId;
+    }
+
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
+
+    public String getTableDesc() {
+        return tableDesc;
+    }
+
+    public void setTableDesc(String tableDesc) {
+        this.tableDesc = tableDesc;
+    }
+
+    public String getPrimaryKey() {
+        return primaryKey;
+    }
+
+    public void setPrimaryKey(String primaryKey) {
+        this.primaryKey = primaryKey;
+    }
+
+    public String getTableColumns() {
+        return tableColumns;
+    }
+
+    public void setTableColumns(String tableColumns) {
+        this.tableColumns = tableColumns;
+    }
+
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+
+    public Date getModifyTime() {
+        return modifyTime;
+    }
+
+    public void setModifyTime(Date modifyTime) {
+        this.modifyTime = modifyTime;
+    }
+
+    public Long getCreator() {
+        return creator;
+    }
+
+    public void setCreator(Long creator) {
+        this.creator = creator;
+    }
+
+    public Long getModifier() {
+        return modifier;
+    }
+
+    public void setModifier(Long modifier) {
+        this.modifier = modifier;
+    }
+
+//    public Boolean getEnable() {
+//        return enable;
+//    }
+//
+//    public void setEnable(Boolean enable) {
+//        this.enable = enable;
+//    }
 }
