@@ -1,7 +1,6 @@
 package com.baosight.xinsight.ots.client;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -9,24 +8,18 @@ import java.util.Map;
 
 import com.baosight.xinsight.config.ConfigConstants;
 import com.baosight.xinsight.config.ConfigReader;
-import com.baosight.xinsight.ots.client.pojo.OTSUserTable;
 import com.baosight.xinsight.ots.client.table.*;
 import com.baosight.xinsight.utils.BytesUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.RowFilter;
-import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 import org.apache.hadoop.hbase.filter.Filter;
 
@@ -39,9 +32,9 @@ import com.baosight.xinsight.ots.client.exception.PermissionSqlException;
 import com.baosight.xinsight.ots.client.exception.TableException;
 import com.baosight.xinsight.ots.client.index.IndexConfigurator;
 import com.baosight.xinsight.ots.client.metacfg.Configurator;
+import com.baosight.xinsight.ots.client.metacfg.Table;
 import com.baosight.xinsight.ots.client.metacfg.Index;
 import com.baosight.xinsight.ots.client.metacfg.IndexProfile;
-import com.baosight.xinsight.ots.client.metacfg.Table;
 import com.baosight.xinsight.ots.client.metacfg.TableProfile;
 import com.baosight.xinsight.ots.client.util.ConnectionUtil;
 import com.baosight.xinsight.ots.common.table.TableMetrics;
@@ -135,6 +128,7 @@ public class OtsAdmin {
      * 创建表
      * 1.首先在pg中创建表
      * 2.判断该用户所在的租户在hbase中是否已经有对应的大表。
+     * 3.如果HBase中创建失败，需要回滚刚刚在pg中的数据。
      * @param userId
      * @param tenantId
      * @param tableName
@@ -144,82 +138,79 @@ public class OtsAdmin {
     public OtsTable createTable(Long userId,
                                 Long tenantId,
                                 String tableName,
-                                OTSUserTable table) {
+                                Table table) throws OtsException {
 
-        boolean hbaseFailed2DelPost = false;
+        boolean hBaseFailed2DelPost;
 
         try {
             //在pg中创建表。
-            //RD: relationship database
-            createRDTable(userId,tenantId,tableName,table);
-            createHbaseTable(tenantId,table.getTableId());
+            createRDBTableWithCheck(userId,tenantId,tableName,table);
+            //在HBase中创建大表
+            hBaseFailed2DelPost = createHBaseTableWithCheck(tenantId);
 
-//            //after rdb success, add hbase info; if hbase operate error, clean rdb info
-//            try {
-//                if(!isHbaseTableExist(tenantid)){
-//                    createHbaseTable(tenantid,  compressType, maxVersion, mobEnable, mobTheshold, bReplication);
-//                }
-//
-//            } catch (OtsException ex) {
-//                hbaseFailed2DelPost = true;
-//                throw ex;
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-
-//            return new OtsTable(table, tenantId, this.conf);
-
-            return null;
-        } catch (ConfigException e) {
-            e.printStackTrace();
-            throw e;
-        } catch (OtsException e) {
-            throw e;
-        } finally {
-            try {
-                if (hbaseFailed2DelPost) {
-                    configurator.delTable(tenantid, tablename);
-                }
-            } catch (ConfigException e) {
-                e.printStackTrace();
+            //HBase创建失败，需要回滚RDB中数据
+            if (hBaseFailed2DelPost){
+                delRDBTable(table.getTableId());
             }
 
+            return new OtsTable(table, tenantId, this.conf);
+
+        }  catch (OtsException e) {
+            throw e;
+        }
+    }
+
+    private void delRDBTable(Long tableId) throws OtsException {
+        Configurator configurator = new Configurator();
+
+        try {
+           configurator.delTable(tableId);
+        } catch (ConfigException e) {//删除失败
+            e.printStackTrace();
+            throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_CREATE,
+                    String.format("Delete table:%s failed!", tableId));
+        }finally {
             configurator.release();
         }
     }
 
     /**
      * 在hbase中创建表，一个租户共用一张表
+     * 如果该租户下已经有表，则不创建。
      * @param tenantId
-     * @param tableId
      */
-    private void createHbaseTable(Long tenantId, Long tableId) {
-        if(!isHbaseTableExist(tenantId)){
-
+    private boolean createHBaseTableWithCheck(Long tenantId) throws OtsException {
+        Boolean HBaseFailed2DelPost = false;
+        try {
+            if(!isHbaseTableExist(tenantId)){
+                createHBaseTable(tenantId);
+            }
+        } catch (OtsException ex) {
+            HBaseFailed2DelPost = true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }finally {
+            return HBaseFailed2DelPost;
         }
-
     }
 
     /**
-     * 在pg中创建表
+     * 在pg中创建表，如果已经存在则报异常。
      * @param userId
      * @param tenantId
      * @param tableName
      * @param table
      */
-    private void createRDTable(Long userId, Long tenantId, String tableName, OTSUserTable table){
+    private void createRDBTableWithCheck(Long userId, Long tenantId, String tableName, Table table) throws OtsException {
         Configurator configurator = new Configurator();
 
         //查询表是否存在
-        try {
-            if (null != configurator.ifExistTable(userId, tableName)) {
-                throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_EXIST,
-                        String.format("user (userId:%d) already owned table:%s!", userId, tableName));
-            }
-        } catch (OtsException e) {
-            e.printStackTrace();
+        if (null != configurator.ifExistTable(userId, tableName)) {//已存在，则抛出异常给上层方法，因为有联动。
+            throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_EXIST,
+                    String.format("user (userId:%d) already owned table:%s!", userId, tableName));
         }
 
+        //插入表
         table.setUserId(userId);
         table.setTenantId(tenantId);
         table.setTableName(tableName);
@@ -228,127 +219,30 @@ public class OtsAdmin {
         table.setCreateTime(new Date());
         table.setModifyTime(table.getCreateTime());
 
-
-        long tableId = configurator.addTable(table);
+        long tableId;
+        try {
+            tableId = configurator.addTable(table);
+        } catch (ConfigException e) {//插入失败，则抛出异常给上层方法，因为有联动。
+            e.printStackTrace();
+            throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_CREATE,
+                    String.format("user (userId:%d) add table:%s failed!", userId, tableName));
+        }finally {
+            configurator.release();
+        }
         table.setTableId(tableId);
     }
 
-
-//    public OtsTable createTable(long userid, long tenantid, String tablename, Integer keyType, Integer hashkeyType,
-//                                Integer rangekeyType, String description, String compressType, Boolean bReplication) throws Exception {
-//        return createTable(userid, tenantid, tablename, keyType, hashkeyType, rangekeyType, description,
-//                compressType, 1, false, 0, bReplication);
-//    }
-//
-//    public OtsTable createTable(long userid, long tenantid, String tablename, Integer keytype, Integer hashkeyType,
-//                                Integer rangekeyType, String description, String compressType,
-//                                Integer maxVersion, Boolean mobEnable, Integer mobTheshold, Boolean bReplication) throws OtsException, ConfigException {
-//
-//        Configurator configurator = new Configurator();
-//        boolean hbaseFailed2DelPost = false;
-//
-//        try {
-//            if (null != configurator.queryTable(tenantid, tablename)) {
-//                throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_EXIST, String.format("tenant (id:%d) already owned table:%s!", tenantid, tablename));
-//            }
-//
-//            Table table = new Table();
-//            table.setUid(userid);
-//            table.setTid(tenantid);
-//            table.setName(tablename);
-//            table.setCompression(compressType != null ? compressType : Algorithm.NONE.getName());
-//            table.setDesp(description);
-//            table.setEnable(1);
-//            table.setMobEnabled((mobEnable != null && mobEnable.booleanValue()) ? 1 : 0);
-//            table.setMobThreshold(mobTheshold != null ? mobTheshold : 100);//!!kb
-//            table.setMaxversion(maxVersion != null ? maxVersion : 1);
-//            table.setKeytype(keytype);
-//            table.setHashkeyType(hashkeyType);
-//            if (null != rangekeyType) {
-//                table.setRangekeyType(rangekeyType);
-//            } else {
-//                table.setRangekeyType(-1);
-//            }
-//            table.setCreateTime(new Date());
-//            table.setModifyTime(table.getCreateTime());
-//            table.setModifyUid(userid);
-//            long id = configurator.addTable(table);
-//            table.setId(id);
-//
-//            //after rdb success, add hbase info; if hbase operate error, clean rdb info
-//            try {
-//                if(!isHbaseTableExist(tenantid)){
-//                    createHbaseTable(tenantid,  compressType, maxVersion, mobEnable, mobTheshold, bReplication);
-//                }
-//
-//            } catch (OtsException ex) {
-//                hbaseFailed2DelPost = true;
-//                throw ex;
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//
-//            return new OtsTable(table, tenantid, this.conf);
-//
-//        } catch (ConfigException e) {
-//            e.printStackTrace();
-//            throw e;
-//        } catch (OtsException e) {
-//            throw e;
-//        } finally {
-//            try {
-//                if (hbaseFailed2DelPost) {
-//                    configurator.delTable(tenantid, tablename);
-//                }
-//            } catch (ConfigException e) {
-//                e.printStackTrace();
-//            }
-//
-//            configurator.release();
-//        }
-//    }
-
-//    public void createHbaseTable(long tenantid,  String tablename, String compressType, Integer maxVersion,
-//                                 Boolean mobEnable, Integer mobTheshold, Boolean bReplication) throws OtsException {
-//        Admin admin = null;
-//
-//        try {
-//            admin = ConnectionUtil.getInstance().getAdmin();
-//            TableProvider.createTable(admin, String.valueOf(tenantid), compressType, maxVersion, mobEnable, mobTheshold, bReplication);
-//        } catch (MasterNotRunningException e) {
-//            e.printStackTrace();
-//            throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_NO_RUNNING_HBASE_MASTER,
-//                    "Failed to create table because hbase master no running!\n" + e.getMessage());
-//        } catch (ZooKeeperConnectionException e) {
-//            e.printStackTrace();
-//            throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_FAILED_CONN_ZK,
-//                    "Failed to create table because can not connecto to zookeeper!\n" + e.getMessage());
-//        } catch (TableException e) {
-//            e.printStackTrace();
-//            throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_CREATE,
-//                    "Failed to create table!\n" + e.getMessage());
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_CREATE,
-//                    "Failed to create table!\n" + e.getMessage());
-//        } finally {
-//            try {
-//                if (admin != null) {
-//                    admin.close();
-//                }
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
-
-    public void createHbaseTable(long tenantid,  String compressType, Integer maxVersion,
-                                 Boolean mobEnable, Integer mobTheshold, Boolean bReplication) throws OtsException {
+    /**
+     * 在HBase中插入表
+     * @param tenantId
+     * @throws OtsException
+     */
+    public void createHBaseTable(long tenantId) throws OtsException {
         Admin admin = null;
 
         try {
             admin = ConnectionUtil.getInstance().getAdmin();
-            TableProvider.createTable(admin, String.valueOf(tenantid), compressType, maxVersion, mobEnable, mobTheshold, bReplication);
+            TableProvider.createTable(admin, String.valueOf(tenantId));
         } catch (MasterNotRunningException e) {
             e.printStackTrace();
             throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_NO_RUNNING_HBASE_MASTER,
@@ -507,7 +401,7 @@ public class OtsAdmin {
             TableProvider.deleteTable(admin, String.valueOf(tenantid), tablename);
 
             // delete table in rdb
-            Table tb = configurator.queryTable(tenantid, tablename);
+            com.baosight.xinsight.ots.client.metacfg.Table tb = configurator.queryTable(tenantid, tablename);
             if (tb != null) {
                 configurator.delTableProfile(tb.getId());
                 configurator.delTable(tb.getTid(), tb.getName());
@@ -661,7 +555,7 @@ public class OtsAdmin {
         Configurator configurator = new Configurator();
 
         try {
-            OTSUserTable table = configurator.queryTable(tenantid, tablename);
+            Table table = configurator.queryTable(tenantid, tablename);
             if (table != null) {
                 return new OtsTable(table, tenantid, this.conf);
             }

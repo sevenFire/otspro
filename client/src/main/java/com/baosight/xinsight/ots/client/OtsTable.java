@@ -210,7 +210,7 @@ public class OtsTable {
 		boolean updateRdb = false;		
 		Configurator configurator = new Configurator();
 		try {
-			
+
 			Table table = configurator.queryTable(getTenantid(), getName());
 			if (table == null) {
 				throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_NOTEXIST, String.format("user (id:%d) was not owned table:%s!", getUserid(), getName()));

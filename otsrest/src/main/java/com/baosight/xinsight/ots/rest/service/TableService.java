@@ -315,7 +315,7 @@ public class TableService {
 //            		model.getMaxVersions(), model.getMobEnabled(), model.getMobThreshold(), model.hasReplication());
 
 
-            ConfigUtil.getInstance().getOtsAdmin().createHbaseTable(tenantid,
+            ConfigUtil.getInstance().getOtsAdmin().createHaseTable(tenantid,
                     model.hasCompressionType() ? convertCompression(model.getCompressionType()) : Algorithm.NONE.getName(),
                     model.getMaxVersions(), model.getMobEnabled(), model.getMobThreshold(), model.hasReplication());
         } catch (OtsException e) {
@@ -409,13 +409,14 @@ public class TableService {
                                 info.isReadPermission(), info.isWritePermission(), info.isPermissionFlag(), info.getCurrentTime()));
             }
 
-            //判定pg中小表是否已经存在
-            if (TableService.exist(userInfo, tableName)) {
-                LOG.error(Response.Status.CONFLICT.name() + ":" + tableName + " has exist.");
-                throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_EXIST, Response.Status.CONFLICT.name() + ":" + tableName + " has exist.");
-            }
+//            //判定pg中小表是否已经存在
+              //在create方法中已经校验了。
+//            if (TableService.exist(userInfo, tableName)) {
+//                LOG.error(Response.Status.CONFLICT.name() + ":" + tableName + " has exist.");
+//                throw new OtsException(OtsErrorCode.EC_OTS_STORAGE_TABLE_EXIST, Response.Status.CONFLICT.name() + ":" + tableName + " has exist.");
+//            }
 
-            //创建表
+            //创建表（包含大表和小表），以及表存在性校验
             OtsTable table = ConfigUtil.getInstance().getOtsAdmin().createTable(userInfo.getUserId(), userInfo.getTenantId(), tableName,
                     createBodyModel.toTable());
 

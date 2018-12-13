@@ -13,7 +13,6 @@ import java.util.List;
 import com.baosight.xinsight.ots.OtsErrorCode;
 import com.baosight.xinsight.ots.client.exception.ConfigException;
 import com.baosight.xinsight.ots.client.exception.PermissionSqlException;
-import com.baosight.xinsight.ots.client.pojo.OTSUserTable;
 import com.baosight.xinsight.ots.constants.TableConstants;
 
 import org.apache.commons.lang.StringUtils;
@@ -95,7 +94,7 @@ public class Configurator {
 	}
 
 	//新增表
-	public long addTable(OTSUserTable otsUserTable) throws ConfigException	{
+	public long addTable(Table table) throws ConfigException	{
 		long id = 0;
 
 		try {
@@ -159,7 +158,7 @@ public class Configurator {
 
 	}
 
-	public void updateTable(Table table) throws ConfigException	{	
+	public void updateTable(Table table) throws ConfigException	{
 		
 		try { 
 			connect();
@@ -229,8 +228,8 @@ public class Configurator {
 	 * @return
 	 * @throws ConfigException
 	 */
-	public OTSUserTable queryTable(long userid, String tableName) throws ConfigException{
-		OTSUserTable table = null;
+	public Table queryTable(long userid, String tableName) throws ConfigException{
+		Table table = null;
 
 		try {
 			connect();
@@ -256,8 +255,8 @@ public class Configurator {
 	 * @param rs
 	 * @return
 	 */
-	private OTSUserTable resultsetToTable(ResultSet rs) throws SQLException {
-		OTSUserTable table = new OTSUserTable();
+	private Table resultsetToTable(ResultSet rs) throws SQLException {
+		Table table = new Table();
 		table.setUserId(rs.getLong(TableConstants.USER_ID));
 		table.setTableId(rs.getLong(TableConstants.TABLE_ID));
 		table.setTenantId(rs.getLong(TableConstants.TENANT_ID));
@@ -277,7 +276,7 @@ public class Configurator {
 	}
 
 	public List<Table> queryAllTable(long userid, long tenantid, List<Long> noGetPermissionList) throws ConfigException {
-		List<Table> lstTables = new ArrayList<Table>();
+		List<Table> lstTables = new ArrayList<>();
 		
 		try {
 			connect();			
@@ -295,7 +294,7 @@ public class Configurator {
 			LOG.debug(sql);			
 			ResultSet rs = st.executeQuery(sql);
 			while (rs.next())	{
-				Table table = new Table();
+				Table table = new com.baosight.xinsight.ots.client.metacfg.Table();
 				table.setUid(rs.getLong("uid"));
 				table.setName(rs.getString("name"));
 				table.setId(rs.getLong("id"));
@@ -325,7 +324,7 @@ public class Configurator {
 	}
 	
 	public List<Table> queryAllTable(long userid, long tenantid, String name, Long limit, Long offset, List<Long> noGetPermissionList) throws ConfigException {
-		List<Table> lstTables = new ArrayList<Table>();
+		List<Table> lstTables = new ArrayList<>();
 		
 		try {
 			connect();			
@@ -352,7 +351,7 @@ public class Configurator {
 			
 			ResultSet rs = st.executeQuery(sql);
 			while (rs.next())	{
-				Table table = new Table();
+				Table table = new com.baosight.xinsight.ots.client.metacfg.Table();
 				table.setUid(rs.getLong("uid"));
 				table.setName(rs.getString("name"));
 				table.setId(rs.getLong("id"));
@@ -409,7 +408,7 @@ public class Configurator {
 	}
 	
 	public List<Table> queryAllTableByTid(long tenantid, List<Long> noGetPermissionList) throws ConfigException {
-		List<Table> lstTables = new ArrayList<Table>();		
+		List<Table> lstTables = new ArrayList<>();
 		try {
 			connect();			
 			Statement st = conn.createStatement();
@@ -903,8 +902,8 @@ public class Configurator {
 		}	
 	}
 	
-	public List<Table> queryPermisstionTables(long userid, long tenantid) throws ConfigException {	
-		List<Table> lstTables = new ArrayList<Table>();		
+	public List<com.baosight.xinsight.ots.client.metacfg.Table> queryPermisstionTables(long userid, long tenantid) throws ConfigException {
+		List<Table> lstTables = new ArrayList<>();
 		try {
 			connect();			
 			Statement st = conn.createStatement();			
@@ -912,24 +911,24 @@ public class Configurator {
 			ResultSet rs = st.executeQuery(sqlByPermittedList);
 			
 			while (rs.next())	{
-				Table table = new Table();
-				table.setUid(rs.getLong("uid"));
-				table.setName(rs.getString("name"));
-				table.setId(rs.getLong("id"));
-				table.setDesp(rs.getString("desc"));
-				table.setCompression(rs.getString("compression"));
-				table.setEnable(rs.getShort("enable"));
-				table.setMaxversion(rs.getInt("maxversion"));
-				table.setTid(rs.getLong("tid"));
-				table.setMobEnabled(rs.getShort("mob_enabled"));
-				table.setMobThreshold(rs.getLong("mob_threshold"));
-				
-				table.setKeytype(rs.getInt("keytype"));
-				table.setHashkeyType(rs.getInt("hashkey_type"));
-				table.setRangekeyType(rs.getInt("rangekey_type"));
-				table.setCreateTime(rs.getTimestamp("create_time"));
-				table.setModifyTime(rs.getTimestamp("modify_time"));
-				table.setModifyUid(rs.getLong("modify_uid"));
+				Table table = resultsetToTable(rs);
+//				table.setUid(rs.getLong("uid"));
+//				table.setName(rs.getString("name"));
+//				table.setId(rs.getLong("id"));
+//				table.setDesp(rs.getString("desc"));
+//				table.setCompression(rs.getString("compression"));
+//				table.setEnable(rs.getShort("enable"));
+//				table.setMaxversion(rs.getInt("maxversion"));
+//				table.setTid(rs.getLong("tid"));
+//				table.setMobEnabled(rs.getShort("mob_enabled"));
+//				table.setMobThreshold(rs.getLong("mob_threshold"));
+//
+//				table.setKeytype(rs.getInt("keytype"));
+//				table.setHashkeyType(rs.getInt("hashkey_type"));
+//				table.setRangekeyType(rs.getInt("rangekey_type"));
+//				table.setCreateTime(rs.getTimestamp("create_time"));
+//				table.setModifyTime(rs.getTimestamp("modify_time"));
+//				table.setModifyUid(rs.getLong("modify_uid"));
 				
 				lstTables.add(table);
 			}

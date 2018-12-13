@@ -2,7 +2,7 @@ package com.baosight.xinsight.ots.rest.body.table;
 
 import com.baosight.xinsight.ots.OtsConstants;
 import com.baosight.xinsight.ots.OtsErrorCode;
-import com.baosight.xinsight.ots.client.pojo.OTSUserTable;
+import com.baosight.xinsight.ots.client.metacfg.Table;
 import com.baosight.xinsight.ots.exception.OtsException;
 import com.baosight.xinsight.utils.JsonUtil;
 
@@ -13,7 +13,6 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -119,8 +118,8 @@ public class TableCreateBodyModel implements Serializable{
      * 将请求体中的参数放入table的实体类中
      * @return
      */
-    public OTSUserTable toTable() {
-        OTSUserTable table = new OTSUserTable();
+    public Table toTable() {
+        Table table = new Table();
         table.setTableDesc(tableDesc);
         table.setPrimaryKey(primaryKey.toString());
         table.setTableColumns(tableColumns.toString());
@@ -130,7 +129,7 @@ public class TableCreateBodyModel implements Serializable{
 
     @Test
     public void test() {
-        OTSUserTable table = new OTSUserTable();
+        Table table = new Table();
         table.setTableDesc(tableDesc);
         table.setPrimaryKey(primaryKey.toString());
         table.setTableColumns(tableColumns.toString());
